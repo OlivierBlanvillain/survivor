@@ -14,7 +14,7 @@
  *
  */
 
-/*global window, console, document, navigator, setTimeout, setInterval, clearInterval, soundManager */
+/*global window, console, document, navigator, setTimeout, setInterval, clearInterval */
 /*jslint vars: true, regexp: true, sloppy: true, white: true, nomen: true, plusplus: true, todo: true */
 
 // 8.16.2014: The jslint gods have been re-appeased. Added strict mode.
@@ -63,21 +63,8 @@
  *  - spaceballs (immune to shots, move randomly)
  *  - turret gunfire
  *
- * Sound effects
- * -------------
- *  - welcome screen "flight of the valkyries" music?
- *  - initial game start / "warp" sound
- *  - spaceship thrust
- *  - bad guy cartoon noises (one per bad guy? simultaneous allowed?)
- *  - bad guy single-frozen-note death sound
- *  - box shot/popping sounds (incremental sounds?)
- *  - ship explosion noise
- *  - base explosion (60 Hz, louder, BOOM) sound
- *  - background pulse noise set to "frame rate" of level
- *
  * UI considerations
  * -----------------
- *  - mobile, iOS: No sound, or single-channel sound hack?
  *  - touch controls - finger on screen = direction? circle-based joystick UI?
  *  - touch controls - fire button, smartbomb button?
  *
@@ -112,7 +99,6 @@
  *    + form walls around bases
  *    + worth some points(?)
  *    + take two hits
- *    + increase global "box pop" sound when hit, eventually resets
  *    + collide with spaceship, kill on contact
  *    + a few different box designs
  *    + up to 4 frames of animation
@@ -313,67 +299,6 @@ function Survivor() {
     data: gameData,
     dom: gameDom,
     objects: gameObjects
-
-  };
-
-  function getAudioPitch() {
-    return Math.floor(audioPitchCounter);
-  }
-
-  function incrementAudioPitch() {
-    // throttle audible pitch increase calls
-    var now = new Date();
-    if (now - lastAudioIncrement > audioIncrementThrottle) {
-      
-      lastAudioIncrement = now;
-      audioPitchCounter += 0.5;
-      if (audioPitchCounter >= audioPitchCounterMax) {
-        audioPitchCounter = 0;
-      }
-    }
-    return getAudioPitch();
-  }
-
-  var soundSprites;
-
-  soundSprites = {
-
-    popSpriteCounter: 0,
-    popSpriteCounterMax: 4,
-    boomSpriteCounter: 0,
-    boomSpriteCounterMax: 4,
-
-    playBoom: function(scale) {
-
-      var sID = 'boom-sprite-' + soundSprites.boomSpriteCounter;
-
-      soundManager.play(sID, {
-        from: (scale * 1000),
-        to: (scale * 1000) + 750
-      });
-
-      soundSprites.boomSpriteCounter++;
-
-      if (soundSprites.boomSpriteCounter >= soundSprites.boomSpriteCounterMax) {
-        soundSprites.boomSpriteCounter = 0;
-      }
-
-    },
-
-    playPop: function(audioPitch) {
-
-      soundManager.play('pop-sprite-' + soundSprites.popSpriteCounter, {
-        from: (audioPitch*400) - 10,
-         to: (audioPitch*400) + 350
-      });
-
-      soundSprites.popSpriteCounter++;
-
-      if (soundSprites.popSpriteCounter >= soundSprites.popSpriteCounterMax) {
-        soundSprites.popSpriteCounter = 0;
-      }
-
-    }
 
   };
 
@@ -582,8 +507,6 @@ function Survivor() {
       } else if (attempt(styles.css_2d)) {
         prop = 'rotate';
       }
-
-      // soundManager._wD('Has 3D rotate: '+localFeatures.rotate.has3D);
 
       localFeatures.rotate.prop = prop;
 
@@ -796,12 +719,6 @@ function Survivor() {
 
         if (heartbeatCounter % 2 === 0) {
 
-          if (features.audio) {
-
-            soundManager.play('heartbeat');
-
-          }
-
           game.objects.baseController.events.pulse();
 
         }
@@ -966,19 +883,12 @@ function Survivor() {
 
     function pause() {
 
-      // TODO: this.paused check?
-      if (features.audio) {
-        soundManager.mute();
-      }
       stopTimer();
 
     }
 
     function resume() {
 
-      if (features.audio) {
-        soundManager.unmute();
-      }
       startTimer();
 
     }
@@ -1291,7 +1201,6 @@ function Survivor() {
         // for centering around ship
         centerOffset = 12,
         counter = 0,
-        sound,
         nodeParent = game.dom.world;
 
     css = {
@@ -1515,14 +1424,6 @@ function Survivor() {
 
       randomizePosition();
 
-      // play sound on loop, annoy user?
-      if (features.audio) {
-        sound = soundManager.getSoundById('badguy-loop-' + (Math.random() > 0.5 ? 1 : 0));
-        if (sound && !sound.playState) {
-          sound.play();
-        }
-      }
-
       if (!data.active) {
         data.active = true;
       }
@@ -1535,14 +1436,6 @@ function Survivor() {
       if (!data.dead && !data.exploding) {
 
         game.objects.gameController.addPoints(data.points);
-
-        if (features.audio) {
-          incrementAudioPitch();
-          if (sound) {
-            sound.stop();
-          }
-          soundSprites.playBoom(audioBoomScale[getAudioPitch()]);
-        }
 
         data.exploding = true;
         utils.css.add(o, css.exploding);
@@ -1801,12 +1694,6 @@ function Survivor() {
     }
 
     function collision() {
-
-      if (features.audio) {
-        // make noise.
-        incrementAudioPitch();
-        soundSprites.playBoom(audioBoomScale[getAudioPitch()]);
-      }
 
     }
 
@@ -2865,15 +2752,6 @@ function Survivor() {
       runTime;
 
     function makeNoise() {
-
-      if (features.audio) {
-
-        if (Math.random() > 0.85) {
-          soundSprites.playBoom(parseInt(Math.random()*10, 10));
-          // TODO: pan
-        }
-
-      }
 
     }
 
@@ -4939,11 +4817,6 @@ function Survivor() {
         // initial start.
         utils.css.add(o, css.thrusting);
 
-        if (features.audio) {
-          audio.thrustStart.play();
-          audio.thrustLoop.play();
-        }
-
       }
 
       data.thrusting = true;
@@ -5018,12 +4891,6 @@ function Survivor() {
       utils.css.remove(o, css.thrusting);
 
       data.thrusting = false;
-
-      if (features.audio) {
-        // initial start.
-        audio.thrustStart.stop();
-        audio.thrustLoop.stop();
-      }
 
     }
 
@@ -5204,10 +5071,6 @@ function Survivor() {
 
       data.dying = true;
 
-      if (features.audio) {
-        audio.explode.play();
-      }
-
       hide();
 
       // gunfire should die at this point, too
@@ -5361,24 +5224,6 @@ function Survivor() {
             toRemove.push(i);
           }
 
-        }
-
-        // TODO: sound should only be played when hitting blocks.
-        if (hit && features.audio) {
-
-          // make noise.
-          audioPitch = getAudioPitch();
-
-          if (features.audio) {
-
-            soundSprites.playPop(audioPitch);
-
-          }
-
-        }
-
-        if (incrementPitch) {
-          incrementAudioPitch();
         }
 
       }
@@ -5750,29 +5595,6 @@ function Survivor() {
     }
 
     function initSound() {
-
-      if (features.audio) {
-
-        audio.thrustStart = soundManager.createSound({
-          id: 'ship-thrust-start',
-          url: 'audio/ship-thrust-start.mp3',
-          autoLoad: true
-        });
-
-        audio.thrustLoop = soundManager.createSound({
-          id: 'ship-thrust-loop',
-          url: 'audio/ship-thrust-loop.mp3',
-          loops: 999,
-          autoLoad: true
-        });
-
-        audio.explode = soundManager.createSound({
-          id: 'ship-explode',
-          url: 'audio/ship-explode.mp3',
-          autoLoad: true
-        });
-
-      }
 
     }
 
@@ -6611,12 +6433,6 @@ function Survivor() {
 
       game.objects.gameController.addPoints(data.points);
 
-      if (features.audio) {
-        // make noise.
-        incrementAudioPitch();
-        soundSprites.playBoom(audioBoomScale[getAudioPitch()]);
-      }
-
       game.objects.statsController.record('turret');
 
       // don't let gunfire respawn?
@@ -6942,10 +6758,6 @@ function Survivor() {
 
       if (!data.active || data.dying || data.dead) {
         return true;
-      }
-
-      if (features.audio) {
-        soundManager.play('base-explode');
       }
 
       data.dying = true;
@@ -7974,8 +7786,6 @@ function Survivor() {
 
     game.objects.ship.findSafeRespawnLocation();
 
-    soundManager.play('gamewarp-start');
-
     game.objects.ship.reset();
 
     game.objects.gameLoop.resume();
@@ -8055,69 +7865,9 @@ function Survivor() {
 
   }
 
-  function initAudio() {
-
-    var i;
-
-    features.audio = true;
-
-    soundManager.createSound({
-      id: 'gamewarp-start',
-      url: 'audio/gamewarp-start.mp3'
-    }).play();
-
-    soundManager.createSound({
-      id: 'heartbeat',
-      url: 'audio/heartbeat.mp3',
-      multiShot: true,
-      autoLoad: true
-    });
-
-    soundManager.createSound({
-      id: 'badguy-loop-0',
-      url: 'audio/badguy-loop-1.mp3',
-      loops: 999,
-      autoLoad: true
-    });
-
-    soundManager.createSound({
-      id: 'badguy-loop-1',
-      url: 'audio/badguy-loop-2.mp3',
-      loops: 999,
-      autoLoad: true
-    });
-
-    soundManager.createSound({
-      id: 'base-explode',
-      url: 'audio/base-explode.mp3',
-      autoLoad: true
-    });
-
-    for (i=0; i<soundSprites.boomSpriteCounterMax; i++) {
-      soundManager.createSound({
-        id: 'boom-sprite-'+i,
-        url: 'audio/boom-sprite.mp3',
-        autoLoad: true
-      });
-    }
-
-    for (i=0; i<soundSprites.popSpriteCounterMax; i++) {
-      soundManager.createSound({
-        id: 'pop-sprite-'+i,
-        url: 'audio/pop-sprite.mp3',
-        autoLoad: true
-      });
-    }
-
-  }
-
   function init() {
 
     game.objects.gameLoop = new GameLoop();
-
-    if (soundManager.ok() && !IS_MUTED) {
-      initAudio();
-    }
 
     game.objects.collision = new Collision();
 
@@ -8228,10 +7978,6 @@ function go_go_go() {
 
   function startGame() {
 
-    if (soundManager.ok()) {
-      soundManager.stop('valkyries');
-    }
-
     survivor = new Survivor();
     survivor.init();
     document.getElementById('world-container').style.display = 'block';
@@ -8256,14 +8002,6 @@ function go_go_go() {
     title.style.display = 'block';
 
     c64.parentNode.removeChild(c64);
-
-    if (soundManager.ok() && !IS_MUTED) {
-      soundManager.createSound({
-        id: 'valkyries',
-        url: 'audio/valkyries.mp3',
-        autoPlay: true
-      });
-    }
 
     title.onclick = function() {
       hideGameTitleScreen();
@@ -8354,90 +8092,19 @@ function go_go_go() {
 
   }
 
-  // first, make the noise.
 
-  if (soundManager.ok() && !navigator.userAgent.match(/mobile/i) && !IS_MUTED) {
 
-    /**
-     * Audio sample credit / thank-you: YouTube user "daddlertl2", last active 2 years ago (as of February 2012)
-     * http://youtu.be/_K7MUkxjeaM
-     * video "C64-Diskette wird formatiert (mit Basic Befehl) " uploaded May 1, 2009
-     * (gappy audio track from video fixed for use in this project)
-     */
+  l0.style.display = 'block';
+  l1.style.display = 'block';
+  l2.style.display = 'block';
 
-    var _1541 = soundManager.createSound({
-      id: 'c64-1541-format',
-      url: 'audio/1541-formatting-sound-short.mp3'
-    });
+  document.getElementById('go_go_go').style.display = 'block';
 
-    _1541.onPosition(800, function() {
-      /**
-       * SEARCHING FOR SURVIVOR-2012
-       * at this point, the Commodore 1541-II floppy drive's head knocking sound is playing.
-       * and yes, technically this alignment process is usually heard only when formatting disks.
-       * if you heard that and were frowning in disappointment at the mis-use, yes, you are technically correct.
-       * if you are both technically correct and reading this comment, then you win approximately one internets.
-       */
-      l1.style.display = 'block';
-    });
-
-    _1541.onPosition(2000, function() {
-      /**
-       * LOADING
-       */
-      l2.style.display = 'block';
-    });
-
-    _1541.onPosition(5000, function() {
-      /**
-       * READY.
-       * RUN
-       */
-      document.getElementById('go_go_go').style.display = 'block';
-    });
-
-    _1541.onPosition(6000, showGameTitleScreen);
-
-    _1541.play();
-
-    l0.style.display = 'block';
-
-  } else {
-
-    l0.style.display = 'block';
-    l1.style.display = 'block';
-    l2.style.display = 'block';
-
-    document.getElementById('go_go_go').style.display = 'block';
-
-    window.setTimeout(showGameTitleScreen, 2500);
-
-  }
+  window.setTimeout(showGameTitleScreen, 2500);
 
 }
 
-if (!window.location.protocol.match(/http/i) || document.domain.match(/schillmania\.com/i)) {
-
-  soundManager.onready(function() {
-    if (document.referrer && document.referrer.match(/editor/i)) {
-      // if coming from the editor, skip straight to the goods.
-      go_go_go();
-    } else {
-      // let "READY." show for a second.
-      setTimeout(go_go_go, 1000);
-    }
-  });
-
-  soundManager.ontimeout(go_go_go);
-
-} else {
-
-  // no sound effects for external use.
-  // let "READY." show for a second.
-  console.log('Note: sound effects are disabled.');
-  setTimeout(go_go_go, 1000);
-
-}
+setTimeout(go_go_go, 1000);
 
 // invocation closure
 }(window));

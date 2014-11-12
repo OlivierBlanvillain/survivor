@@ -1,59 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
- <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
- <title>SURVIVOR (1982 Commodore 64 game remake)</title>
- <meta name="description" content="A playable HTML + CSS + JavaScript remake of a space-based &quot;shoot-'em-up&quot; arcade game, including a level editor and design tool. Written as a prototype / demo of JavaScript and browser capabilities. Original Atari 2600 game by Richard Carr, (C) 1982 Synapse Software. Created for the C64 by Ewing Soft (1983.)" />
- <meta name="keywords" content="Survivor, JavaScript, HTML, DHTML, animation, CSS3, arcade, retro, space, shooter, arcade game, browser game, commodore 64" />
- <meta name="author" content="Scott Schiller" />
- <!--
- /** @license
-  *
-  * SURVIVOR: A HTML + CSS + JavaScript prototype
-  * based on the Commodore 64 version of Survivor from 1983
-  *
-  * http://schillmania.com/survivor/
-  * http://www.schillmania.com/content/entries/2012/survivor-c64-html-remake/
-  * http://www.flickr.com/photos/schill/sets/72157628885315581/
-  * https://github.com/scottschiller/SURVIVOR
-  *
-  * Scott Schiller wrote this beginning in December 2011, while on a plane to Hawaii.
-  * Code provided under the Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0) License:
-  * http://creativecommons.org/licenses/by-nc/3.0/
-  *
-  */
-
-  /**
-   * ADDITIONAL PAGE DEBUG OPTIONS / PARAMETERS
-   * ?html5audio=1 - prefer HTML5 audio, if available (at own risk)
-   * ?profile=1 - shows a performance panel with live DOM stats, options to show/hide groups of DOM elements
-   * ?debug=1 - green blocks everywhere on the grid.
-   * ?mute=1 - I hate sound
-   * ?interval=1 - force setInterval() instead of requestAnimationFrame (if available)
-   */
- -->
- <link rel="stylesheet" href="css/survivor.css" />
- <!-- see script/soundmanager2.js for full, commented version -->
- <script src="script/soundmanager2-nodebug-jsmin.js"></script>
- <script>
-  soundManager.setup({
-    url: 'swf/',
-    useHighPerformance: true,
-    flashVersion: 9,
-    wmode: 'opaque',
-    bgColor: '#000000'
-  });
-
-  if (window.location.href.match(/html5audio=1/i) || window.location.href.match(/file/i)) {
-    // try at your own risk - playback may lag, etc.
-    soundManager.setup({
-      preferFlash: false
-    });
-  }
- </script>
- <script src="script/survivor.js"></script>
- <!-- on schillmania.com -->
- <script src="/common/stats.js"></script>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>SURVIVOR (1982 Commodore 64 game remake)</title>
+  <!--
+    ADDITIONAL PAGE DEBUG OPTIONS / PARAMETERS
+    ?html5audio=1 - prefer HTML5 audio, if available (at own risk)
+    ?profile=1 - shows a performance panel with live DOM stats, options to show/hide groups of DOM elements
+    ?debug=1 - green blocks everywhere on the grid.
+    ?mute=1 - I hate sound
+    ?interval=1 - force setInterval() instead of requestAnimationFrame (if available)
+  -->
+  <link rel="stylesheet" href="css/survivor.css" />
+  <script src="script/survivor.js"></script>
 </head>
 
 <body>
