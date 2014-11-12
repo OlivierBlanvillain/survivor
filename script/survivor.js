@@ -1,125 +1,7 @@
-﻿/** @license
- *
- * SURVIVOR: A HTML + CSS + JavaScript prototype
- * based on the Commodore 64 version of Survivor from 1983
- * -------------------------------------------------------
- * http://schillmania.com/survivor/
- * http://www.schillmania.com/content/entries/2012/survivor-c64-html-remake/
- * http://www.flickr.com/photos/schill/sets/72157628885315581/
- * https://github.com/scottschiller/SURVIVOR
- *
- * Scott Schiller wrote this beginning in December 2011, while on a plane to Hawaii.
- * Code provided under the Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0) License:
- * http://creativecommons.org/licenses/by-nc/3.0/
- *
- */
-
-/*global window, console, document, navigator, setTimeout, setInterval, clearInterval */
-/*jslint vars: true, regexp: true, sloppy: true, white: true, nomen: true, plusplus: true, todo: true */
-
-// 8.16.2014: The jslint gods have been re-appeased. Added strict mode.
-
-// 5.25.2013: The jslint gods have been appeased.
-
-/**
- *
- * The TODO: list (written on an old laptop while on a plane to Hawaii, 12/21/2011)
- * --------------------------------------------------------------------------------
- *
- * Map (grid) of space
- * -------------------
- *
- * Main UI
- * -------
- *  - ship always in center
- *  - inertia? some inertia.
- *  - slight parallax on background stars? maybe a blur/streak effect? why not.
- *  - fixed screen size, center or no?
- *  - fixed grid item size? 20x20px?
- *  - world should be able to wrap around. Draw in tiles?
- *  - debug mode should show outlines, overlays, collision detection etc. in CSS.
- *
- * Collision detection
- * -------------------
- *  - player vs. bricks, bad guys, gunfire (= death)
- *  - x/y + vector -> row/col? player can occupy potentially 4 grid spaces at once with overlap?
- *  - when in a row/column, determine exactly what is in contact. isOverlappingGrid({x, y, row, col}) or somesuch.
- *  - spaceballs should reverse course and randomly flip the other axis when they hit a boundary (wall, or another spaceball.)
- *  - bad guys only collide with spaceship. absolutely-positioned for everything else.
- * 
- * Graphic elements
- * ----------------
- *  - blocks
- *  - "bases" (structures which hold turrets)
- *  - turrets themselves
- *  - turret gunfire
- *  - bad guys
- *  - spaceballs
- *
- * Things that move, object collision etc.
- * ---------------------------------------
- *  - blocks (can be shot, disappear)
- *  - bad guys
- *  - spaceballs (immune to shots, move randomly)
- *  - turret gunfire
- *
- * UI considerations
- * -----------------
- *  - touch controls - finger on screen = direction? circle-based joystick UI?
- *  - touch controls - fire button, smartbomb button?
- *
- * Game logic
- * ----------
- *  - intro screen, retro font etc.?
- *  - ability to choose start level?
- *  - begin game: startGame({ level: x, lives: y, smartbombs: z }); ?
- *  - points/scoring? who cares?
- *  - level finished animation sequence - large explosions, show next "level X" screen etc.
- *
- * BEHAVIOURS
- * ----------
- *  - gunfire
- *    + from turret, fixed target distance and speed
- *    + once target is reached, fires again (any delay?)
- *    + collides only with spaceship
- *  - base
- *    + explodes once all turrets are shot out
- *    + noise, animation, increases points, increases game speed(?)
- *  - spaceballs
- *    + wander aimlessly around the world
- *    + bounce off walls and each other
- *    + collision logic: see above, or spaceship (death)
- *    + absorb spaceship fire? turret gunfire?
- *  - bad guys
- *    + show up at random intervals, depending on level/difficulty?
- *    + start randomly off-screen, seek out player
- *    + jittery motion (animation) and movement
- *    + bird, face, "X", ?
- *  - squares/boxes ("building blocks")
- *    + form walls around bases
- *    + worth some points(?)
- *    + take two hits
- *    + collide with spaceship, kill on contact
- *    + a few different box designs
- *    + up to 4 frames of animation
- */
-
-var survivor;
-
-(function(window) {
+﻿var survivor;
 
 "use strict";
 
-if (window.console === undefined) {
-  // hax
-  window.console = {
-    log: function() {
-      return false;
-    }
-  };
-}
-
-var IS_MUTED = window.location.href.toString().match(/mute/i);
 var winloc = window.location.toString();
 
 function Survivor() {
@@ -131,8 +13,6 @@ function Survivor() {
       gameObjects,
       mapTypes,
       mapData,
-      isIE = navigator.userAgent.match(/msie/i),
-      oldIE = navigator.userAgent.match(/msie 6/i),
 
       // adds debug elements to the grid, UI etc.
       DEBUG_MODE = (winloc.match(/debug/i)),
@@ -161,11 +41,7 @@ function Survivor() {
 
       spaceBallTemplate,
       spaceBallCounter = 0,
-      audioPitchCounter = 0,
-      audioPitchCounterMax = 15,
-      audioBoomScale = [0,0,1,2,2,3,4,4,5,6,6,7,8,8,9,10],
       lastAudioIncrement = new Date(),
-      audioIncrementThrottle = 333,
 
       /**
       * NOTE: UTF-8 character encoding required for map parsing to work.
@@ -231,10 +107,6 @@ function Survivor() {
     '                                                                         ',
     '                                                                         '
   ];
-
-      // for transform-based window scrolling vs. traditional scrolling, transform() may be faster under Firefox
-      // (but causes some visual glitches in Webkit)
-      // is_firefox = !!(navigator.userAgent.match(/firefox/i));
 
   gameObjects = {
 
@@ -442,8 +314,6 @@ function Survivor() {
     // note local scope.
     var localFeatures = {
 
-      audio: false, // set later via SM2
-
       opacity: (function(){
         try {
           testDiv.style.opacity = '0.5';
@@ -649,17 +519,6 @@ function Survivor() {
 
       loop: function() {
 
-/*
-        var now = new Date();
-
-        if (now - lastExec < data.loopThrottle) {
-          // exit if this loop is running too fast
-          return false;
-        }
-
-        lastExec = now;
-*/
-        // based on game state, animate or wait for input or ?
         counter++;
         fpsCounter++;
 
@@ -684,12 +543,7 @@ function Survivor() {
 
         game.objects.smartbombController.animate();
 
-        // don't animate certain objects if ship is exploding (dying/dead)
-        // if (game.objects.ship.isAlive()) {
-
-          animateSpaceBalls();
-
-        // }
+        animateSpaceBalls();
 
       },
 
@@ -711,7 +565,7 @@ function Survivor() {
 
         currentPhase = css['phase' + data.pulseCount];
 
-        if (!oldIE && !USE_EXPERIMENTAL_TRANSFORM) {
+        if (!USE_EXPERIMENTAL_TRANSFORM) {
           utils.css.swap(game.dom.world, data.lastPhase, currentPhase);
         }
 
@@ -734,8 +588,6 @@ function Survivor() {
         if (oStats) {
           oStats.innerHTML = (!isNaN(fpsCount) ? fpsCount : 'N/A');
         }
-
-        // data.GAME_SPEED = (fpsCount >= 15 ? 1 : 15 / fpsCount);
 
         fpsCounter = 0;
 
@@ -805,8 +657,6 @@ function Survivor() {
 
       // apply to the world (CSS animations)
       game.dom.world.className = pulseCSS.className;
-
-      // TODO: clean up
 
       data.pulseInterval = data.pulseIntervals['stage' + nStage];
       data.speedMultiplier = data.speedMultipliers['stage' + nStage];
@@ -929,7 +779,6 @@ function Survivor() {
      * maintains an array of blocks actively being hit
      * and animates them, removing from the array once finished
      */
-
     var objects = {
       blocks_hash: {},
       blocks: []
@@ -1315,8 +1164,6 @@ function Survivor() {
         data.lastX = x;
         data.lastY = y;
 
-        // TODO: Review vs. coordinate checks
-
         location = game.objects.collision.xyToRowCol(x + data.jitterX, y + data.jitterY);
 
         if (location.col !== data.col || location.row !== data.row) {
@@ -1337,7 +1184,7 @@ function Survivor() {
 
     }
 
-    function moveBy(x,y) { // TODO: labels for relative grid item values?
+    function moveBy(x,y) {
 
       // move and do collision check?
       data.x += (x * game.objects.gameLoop.data.speedMultiplier);
@@ -1506,7 +1353,6 @@ function Survivor() {
           if (hit) {
             // we have a winner.
             // let gunfire pass through, per original game rules.
-            // fire[i].die();
             break;
           }
 
@@ -1514,21 +1360,6 @@ function Survivor() {
 
       }
 
-      // TODO: Make new map-based method work better.
-/*
-      gunfireObject = game.objects.shipGunfireMap.check(data.row, data.col);
-
-      if (gunfireObject && !gunfireObject.data.dead) {
-        // we have a (potential) winner.
-        // do more precise coordinate check within grid.
-        hit = game.objects.collision.check(thisPoint, {
-          x: gunfireObject.data.x,
-          y: gunfireObject.data.y,
-          w: gunfireObject.data.w,
-          h: gunfireObject.data.h
-        });
-      }
-*/
 
       if (hit) {
 
@@ -1621,20 +1452,14 @@ function Survivor() {
 
       } else {
 
-        // explosion/death sequence
+        data.explosionFrame++;
 
-//        if (counter % 2 === 0) {
+        applyFrameX(data.explosionFrame);
 
-          data.explosionFrame++;
-
-          applyFrameX(data.explosionFrame);
-
-          if (data.explosionFrame >= data.explosionFrames) {
-            // it's all over.
-            dead();
-          }
-
-//        }
+        if (data.explosionFrame >= data.explosionFrames) {
+          // it's all over.
+          dead();
+        }
 
       }
 
@@ -1767,7 +1592,6 @@ function Survivor() {
 
       }
 
-      // TODO: needless optimization?
       if (!hit) {
         selfCollisionCheck();
       }
@@ -1800,7 +1624,6 @@ function Survivor() {
       var i, j;
       // the effect of a smartbomb.
       for (i=0, j=objects.badGuys.length; i<j; i++) {
-        // TODO: active check?
         objects.badGuys[i].die();
       }
 
@@ -1822,15 +1645,6 @@ function Survivor() {
   spaceBallTemplate.className = 'spaceball';
 
   function SpaceBall(oOptions) {
-
-    /**
-     * "it's like a meatball, but in space!"
-     * a mysterious asteroid blob that idly floats around the world.
-     * it doesn't judge, it doesn't blame, it just *is*.
-     * oblivious to ship and turret gunfire.
-     * destroys everything in its path.
-     * bounces off of blocks, walls and other spaceballs.
-     */
 
     var o,
         data,
@@ -1913,8 +1727,6 @@ function Survivor() {
         data.lastX = x;
         data.lastY = y;
 
-        // location = game.objects.collision.xyToRowCol(x + (data.vX >= 0 ? data.w : 0), y + (data.vY >= 0 ? data.h : 0));
-
         location = game.objects.collision.xyToRowCol(x, y);
 
         if (game.objects.screen.isInView(location.col, location.row)) {
@@ -1957,7 +1769,7 @@ function Survivor() {
 
     }
 
-    function moveBy(x,y) { // TODO: labels for relative grid item values?
+    function moveBy(x,y) {
 
       // move and do collision check?
       data.x += (x * game.objects.gameLoop.data.speedMultiplier);
@@ -1983,12 +1795,9 @@ function Survivor() {
 
       // bounce if we hit a world boundary, a grid item, or another spaceball.
 
-      // TODO: allow wrap-around, if objects don't exist at the other end?
-
       var item,
           location;
 
-      // non-standard formatting, in favour of lengthy if...else
       if ((data.vX < 0 && data.x + data.vX <= 0)
         || (data.vX >= 0 && data.col >= game.data.world_cols)
         || (data.vY >= 0 && data.row >= game.data.world_rows)
@@ -2022,7 +1831,6 @@ function Survivor() {
 
       // this should be only a Block() instance.
       if (item && !item.data.dead) {
-        // console.log('spaceball hit block');
         return bounce();
       }
 
@@ -2124,8 +1932,6 @@ function Survivor() {
 
     function restore() {
 
-      // you can't kill a roach, man.
-
       init();
 
       // show right away if it should be visible, too
@@ -2217,7 +2023,6 @@ function Survivor() {
           last = lastVisibleCheck,
           visible;
 
-      // TODO: make sure this check works.
       if (last.x === coords.x && last.y === coords.y && coords.screen_width === coords.width && coords.screen_height === coords.height) {
 
         // no change since last check
@@ -2235,7 +2040,6 @@ function Survivor() {
       last.screen_width = coords.width;
       last.screen_height = coords.height;
 
-      // var visible_range = [];
 
       visible = {
         from: game.objects.collision.xyToRowCol(coords.x, coords.y),
@@ -2245,10 +2049,7 @@ function Survivor() {
       data.visibleGridInfo = {
         from: visible.from,
         to: visible.to
-        // range: visible_range
       };
-
-      // console.log('refreshVisibleGrid: ' + data.visibleGridInfo.from.col + ' -> ' + data.visibleGridInfo.to.col + ', ' + data.visibleGridInfo.from.row + ' -> ' + data.visibleGridInfo.to.row + ')');
 
       return data.visibleGridInfo;
 
@@ -2296,15 +2097,6 @@ function Survivor() {
         targetY = parseInt(y - data.coords.height/2, 10);
       }
 
-/*
-      window.scrollTo(targetX, targetY);
-
-      data.coords.lastX = targetX;
-      data.coords.lastY = targetY;
-
-      data.coords.x = targetX;
-      data.coords.y = targetY;
-*/
       moveTo(targetX, targetY);
 
     }
@@ -2334,8 +2126,6 @@ function Survivor() {
 
       // is this location on-screen?
       var info = data.visibleGridInfo;
-
-      // console.log('isInView(' + col +', ' + row + ' / ' + info.from.col + ' -> ' + info.to.col + ', ' + info.from.row + ' -> ' + info.to.row + ')');
 
       return (col >= info.from.col && row >= info.from.row && col <= info.to.col && row <= info.to.row);
 
@@ -2868,10 +2658,6 @@ function Survivor() {
 
         document.onclick = null;
 
-        // increase game speed multiplier? this will probably break all kinds of stuff.
-        // TODO: Look at this.
-        game.objects.gameLoop.data.GAME_SPEED += 0.25;
-
         // reset score, stats and so forth
 
         oEnd.style.display = 'none';
@@ -2924,7 +2710,6 @@ function Survivor() {
 
       show();
 
-      // "Jamie wants big boom." (-- Adam Savage, Mythbusters.)
       boom();
 
     }
@@ -2941,7 +2726,6 @@ function Survivor() {
 
     /**
      * determine if anything is occupying a map (grid) location.
-     * TODO: also consider "in turret gunfire path."
      */
 
     var result;
@@ -3062,7 +2846,6 @@ function Survivor() {
 
     }
 
-// console.log(data);
 
     return {
       check: check,
@@ -3785,12 +3568,6 @@ function Survivor() {
 
     // intersect/overlap detection
 
-/*
-    var objects = {
-      spriteData: spriteData
-    };
-*/
-
     function xyToRowCol(x, y) {
 
       var result;
@@ -3875,17 +3652,6 @@ function Survivor() {
 
     function checkSprites(oOptions) {
 
-      /*
-        object1: {
-          type: 'base-generic-wall-down-right',
-          x: data.x,
-          y: data.y,
-          w: data.w,
-          h: data.h
-        },
-        object2: oOptions.object // {spriteType, x, y, w, h}
-      */
-
       var sprite1 = oOptions.object1,
           sprite2 = oOptions.object2,
           sprite1Data,
@@ -3962,7 +3728,6 @@ function Survivor() {
             overlap.sprite1.yOffset = 0;
             overlap.sprite2.yOffset = deltaY;
 
-            // TODO: remove this check since it should always be true?
             if (sprite1.y + sprite1.h >= sprite2.y) {
 
               overlap.sprite1.yOffset = -deltaY;
@@ -4001,7 +3766,6 @@ function Survivor() {
             overlap.sprite2.yOffset = 0;
             overlap.sprite1.yOffset = deltaY;
 
-            // TODO: remove this check since it should always be true?
             if (sprite2.y + sprite2.h >= sprite1.y) {
 
               overlap.sprite2.yOffset = -deltaY;
@@ -4037,8 +3801,6 @@ function Survivor() {
 
       // now we know how the distances between boxes.
 
-      // console.log('checking', sprite1.type, sprite2.type);
-
       sprite1Data = spriteData[sprite1.type];
       sprite2Data = spriteData[sprite2.type];
 
@@ -4069,7 +3831,6 @@ function Survivor() {
           s2X = k - overlap.sprite2.xOffset;
           s2Y = i - overlap.sprite2.yOffset;
           if (s1X >= 0 && s1X < sprite1Data.data.width && s1Y >= 0 && s1Y < sprite1Data.data.height && s2X >= 0 && s2X < sprite2Data.data.width && s2Y >= 0 && s2Y < sprite2Data.data.height) {
-//            console.log('[ loop row/col ' + i + ', ' + k +']: comparing ' + s1X + ', ' + s1Y + ' to ' + s2X + ', ' + s2Y);
             pixel_test = (sprite1Data.check(s1Y, s1X) && sprite2Data.check(s2Y, s2X));
             if (pixel_test) {
               if (PERFORMANCE_MODE || DEBUG_MODE) {
@@ -4272,7 +4033,7 @@ function Survivor() {
 
     }
 
-    function moveBy(x,y) { // TODO: labels for relative grid item values?
+    function moveBy(x,y) {
 
       var screen = game.objects.screen;
 
@@ -4322,7 +4083,6 @@ function Survivor() {
       var i, j;
       var intersects, item;
       var hit = false;
-      var incrementPitch = false;
       var mapObjectItem;
       var passThrough;
 
@@ -4337,7 +4097,6 @@ function Survivor() {
           y: data.y,
           w: data.w,
           h: data.h
-          // TODO: includeNeighbours: true ?
         });
 
         for (i=0, j=intersects.length; i<j; i++) {
@@ -4403,8 +4162,6 @@ function Survivor() {
 
             } else {
 
-              // console.log('no pixel-level check on item, assuming dead');
-
               console.log('no pixel check on item:', item);
 
               hit = true;
@@ -4415,10 +4172,6 @@ function Survivor() {
 
               // did we kill the thing?
               item.hit();
-
-              if (item.data.dead) {
-                incrementPitch = true;
-              }
 
               // kill the gunfire, too?
               die();
@@ -4448,11 +4201,6 @@ function Survivor() {
           hit = game.objects.badGuyController.collisionCheck();
 
           if (hit) {
-            // we hit something, so mark the pitch to increase, and die
-            if (item && item.data.dead) {
-              // did the thing just die?
-              incrementPitch = true;
-            }
             // let gunfire pass through bad guys, per original game rules.
             passThrough = true;
           }
@@ -4537,8 +4285,6 @@ function Survivor() {
 
             // we have an object. do a collision check.
 
-            // console.log('spaceball found at ' + data.row, data.col);
-
             // HACK: compare vs. ship object shape for collision. it's close enough.
 
             hit = mapObjectItem.pixelCollisionCheck({
@@ -4548,10 +4294,6 @@ function Survivor() {
               w: data.w,
               h: data.h
             });
-
-            // console.log('result of collision check with spaceball', hit);
-
-            // hit = mapObjectItem.hittable();
 
           }
 
@@ -4563,8 +4305,7 @@ function Survivor() {
         }
 
         data.lastCollisionResult = {
-          'hit': hit,
-          'incrementPitch': incrementPitch
+          'hit': hit
         };
 
       }
@@ -4606,14 +4347,7 @@ function Survivor() {
 
     var o;
 
-    var audio = {
-      explode: null,
-      thrustStart: null,
-      thrustLoop: null
-    };
-
     var data = {
-      // angle: 0,
       accelMultiplier: 0.015,
       almostZero: 0.02,
       dead: false,
@@ -4660,23 +4394,6 @@ function Survivor() {
       thrusting: 'thrusting',
       hidden: 'hidden'
     };
-
-/*
-    function setPosition(oOptions) {
-
-      var x, y;
-
-      x = Math.floor(oOptions.x);
-      y = Math.floor(oOptions.y);
-
-      data.x = x;
-      data.y = y;
-
-      o.style.left = x + 'px';
-      o.style.top = y + 'px';
-
-    }
-*/
 
     function hide() {
 
@@ -4748,8 +4465,6 @@ function Survivor() {
 
       data.x = x;
       data.y = y;
-
-      // console.log(deltaX, screenXAbs, screenW, screenWThird);
 
       // are we near the screen boundary?
 
@@ -4933,8 +4648,6 @@ function Survivor() {
 
       if (items.length) {
 
-        // console.log('animating ' + items.length + ' gunfire objects');
-
         for (i=0, j=items.length; i<j; i++) {
           // do yo' thang.
           items[i].animate();
@@ -4986,7 +4699,6 @@ function Survivor() {
         vY: yDir,
         x: data.x + xOffset,
         y: data.y + yOffset,
-        // TODO: Review w/h
         w: 7,
         h: 7
       }));
@@ -5116,11 +4828,7 @@ function Survivor() {
       // also, stop any velocity that may be applied.
       game.objects.ship.stop();
 
-//      hide();
-
       moveTo(game.data.NODE_WIDTH * Math.floor(game.objects.ship.data.col), game.data.NODE_HEIGHT * Math.floor(game.objects.ship.data.row));
-
-//      show();
 
     }
 
@@ -5194,8 +4902,6 @@ function Survivor() {
           result,
           results = [],
           hit = false,
-          incrementPitch = false,
-          audioPitch,
           toRemove = [];
 
       if (items.length) {
@@ -5205,11 +4911,6 @@ function Survivor() {
           result = objects.shipGunfire[i].collisionCheck();
 
           if (result) {
-
-            // if there was a hit, allow pitch to increase.
-            if (result.incrementPitch) {
-              incrementPitch = true;
-            }
 
             if (result.hit) {
               hit = true;
@@ -5242,7 +4943,6 @@ function Survivor() {
       /**
        * compares ship coords to grid, looks for collisions.
        */
-
       var i, j,
           intersects,
           item,
@@ -5307,71 +5007,63 @@ function Survivor() {
 
           } else {
 
-            // check moving grid items
+          // check moving grid items
 
-//            if (!intersects[i].isNeighbour) {
+            // look only at midpoint, exclude neighbours...
 
-              // look only at midpoint, exclude neighbours...
+            mapObjectItem = game.objects.turretGunfireMap.check(intersects[i].row, intersects[i].col);
 
-              mapObjectItem = game.objects.turretGunfireMap.check(intersects[i].row, intersects[i].col);
+            if (mapObjectItem) {
 
-              if (mapObjectItem) {
+              // additional pixel-level collision check
+              if (mapObjectItem.pixelCollisionCheck) {
 
-                // console.log('found turret gunfire', mapObjectItem);
-
-                // additional pixel-level collision check
-                if (mapObjectItem.pixelCollisionCheck) {
-
-                  hit = mapObjectItem.pixelCollisionCheck({
-                    type: 'ship',
-                    x: data.x,
-                    y: data.y,
-                    w: data.w,
-                    h: data.h
-                  });
-
-                } else {
-
-                  // we have an object. do a collision check.
-                  hit = mapObjectItem.collisionCheck();
-
-                }
-
-                if (hit) {
-                  console.log('ship hit moving item', mapObjectItem);
-                  return game.objects.ship.die();
-                }
+                hit = mapObjectItem.pixelCollisionCheck({
+                  type: 'ship',
+                  x: data.x,
+                  y: data.y,
+                  w: data.w,
+                  h: data.h
+                });
 
               } else {
 
-                // did we hit a spaceball?
-                mapObjectItem = game.objects.spaceBallMap.check(intersects[i].row, intersects[i].col);
+                // we have an object. do a collision check.
+                hit = mapObjectItem.collisionCheck();
 
-                if (mapObjectItem) {
+              }
 
-                  // console.log('found spaceball');
+              if (hit) {
+                console.log('ship hit moving item', mapObjectItem);
+                return game.objects.ship.die();
+              }
 
-                  // we have an object. do a collision check.
-                  // hit = mapObjectItem.hittable();
+            } else {
 
-                  hit = mapObjectItem.pixelCollisionCheck({
-                    type: 'ship',
-                    x: data.x - (data.vX * 0.5),
-                    y: data.y - (data.vY * 0.5),
-                    w: data.w,
-                    h: data.h
-                  });
+              // did we hit a spaceball?
+              mapObjectItem = game.objects.spaceBallMap.check(intersects[i].row, intersects[i].col);
 
-                  if (hit) {
-                    console.log('spaceball hit ship');
-                    return game.objects.ship.die();
-                  }
+              if (mapObjectItem) {
 
+                // we have an object. do a collision check.
+
+                hit = mapObjectItem.pixelCollisionCheck({
+                  type: 'ship',
+                  x: data.x - (data.vX * 0.5),
+                  y: data.y - (data.vY * 0.5),
+                  w: data.w,
+                  h: data.h
+                });
+
+                if (hit) {
+                  console.log('spaceball hit ship');
+                  return game.objects.ship.die();
                 }
 
               }
 
- //           }
+            }
+
 
           }
 
@@ -5398,8 +5090,6 @@ function Survivor() {
             mapObjectItem = game.objects.turretGunfireMap.check(intersects[i].row, intersects[i].col);
 
             if (mapObjectItem) {
-
-              // console.log('found turret gunfire', mapObjectItem);
 
               // additional pixel-level collision check
               if (mapObjectItem.pixelCollisionCheck) {
@@ -5451,22 +5141,15 @@ function Survivor() {
                   if (hit) {
                     return game.objects.ship.die();
                   }
-
                 }
-
               }
-
             }
-
           }
-
         }
-
       }
-
     }
 
-    function moveBy(x,y) { // TODO: Rename to be relative column distances or something
+    function moveBy(x,y) {
 
       var row, col,
           w = game.data.NODE_WIDTH,
@@ -5648,7 +5331,6 @@ function Survivor() {
      * a component of a "base"
      * consisting of walls and turrets
      */
-
     var o;
 
     // var frameCount = 0;
@@ -5698,7 +5380,6 @@ function Survivor() {
       if (data.exploding) {
         data.exploding = false;
         data.exploded = true;
-        // utils.css.swap(o, css.exploding, css.exploded);
         utils.css.remove(o, css.exploding);
         utils.css.add(o, css.exploded);
       }
@@ -5711,27 +5392,15 @@ function Survivor() {
 
       if (!data.exploded && data.exploding) {
 
-        // frameCount++;
-
-        // if (frameCount % 2 === 0) {
-
-          o.style.backgroundPosition = '0px ' + (data.explosionFrame * -32) + 'px';
-          data.explosionFrame++;
-          if (data.explosionFrame >= data.explosionFrames) {
-            data.explosionFrame = 0;
-          }
-
-        // }
+        o.style.backgroundPosition = '0px ' + (data.explosionFrame * -32) + 'px';
+        data.explosionFrame++;
+        if (data.explosionFrame >= data.explosionFrames) {
+          data.explosionFrame = 0;
+        }
 
       }
 
     }
-
-/*
-    function getNode() {
-      return o;
-    }
-*/
 
     function pixelCollisionCheck(oOptions) {
 
@@ -5740,8 +5409,6 @@ function Survivor() {
 
       var wallType = (data.type + '-' + data.subType).replace(' ', '-');
       wallType = wallType.replace(/wall\-type\-[234]/i, 'wall-type-generic');
-
-      // console.log('comparing ' + oOptions.type + ' <-> ' + wallType);
 
       hit = collision.checkSprites({
          object1: oOptions,
@@ -5824,7 +5491,6 @@ function Survivor() {
     function check(row, col) {
 
       // a dead-simple lookup.
-      // TODO: consider safety check.
 
       // first, round down to ensure we have an integer.
       row = Math.floor(row);
@@ -5870,10 +5536,6 @@ function Survivor() {
 
       clearLocation(id);
 
-      // register new location (TODO: if row/col ranges are valid?)
-
-      // console.log('registering ' + col + ', ' + row);
-
       if (map[row] === undefined || map[row][col] === undefined) {
         console.log('registerLocation(): row/col ' + row + ', ' + col + ' is invalid?');
         return false;
@@ -5899,9 +5561,6 @@ function Survivor() {
           map[i][k] = null;
         }
       }
-
-      // console.log('ObjectMap.init(): made map of ' + map.length + ' x ' + map[0].length);
-
     }
 
     function reset() {
@@ -6065,7 +5724,7 @@ function Survivor() {
 
     }
 
-    function moveBy(x, y) { // TODO: labels for relative grid item values?
+    function moveBy(x, y) {
 
       // move and do collision check?
       data.x += (x * game.objects.gameLoop.data.speedMultiplier * game.objects.gameLoop.data.GAME_SPEED);
@@ -6135,8 +5794,6 @@ function Survivor() {
       } else if (data.yDirection === 1) {
         row--;
       }
-
-      // console.log('direction x/y, ' + data.xDirection + ', ' + data.yDirection + ', start / end: ', data.col + ', ' + data.row + ', end: ' + col + ', ' + row);
 
       data.endRow = row;
       data.endCol = col;
@@ -6208,16 +5865,6 @@ function Survivor() {
 
     }
 
-/*
-    function destruct() {
-      // remove from the dom, etc.
-      if (o) {
-        hide();
-        o = null;
-      }
-    }
-*/
-
     function init() {
 
 
@@ -6239,8 +5886,6 @@ function Survivor() {
       }
 
       // append to DOM
-      // parentNode.appendChild(o);
-
       nodeParent.appendChild(o);
 
     }
@@ -6329,21 +5974,12 @@ function Survivor() {
       wallDirection: directionsMap[_direction],
       points: 500,
       dead: false,
-//      firing: false,
       exploding: false,
       baseExploding: false,
       exploded: false,
       explosionFrame: 0,
       explosionFrames: 6
     };
-
-/*
-    function getNode() {
-      return o;
-    }
-*/
-
-    // events.gameLoop?
 
     function maybeFire() {
 
@@ -6453,8 +6089,6 @@ function Survivor() {
         data.exploded = false;
       }
 
-      // data.active = false;
-
     }
 
     function hit() {
@@ -6495,8 +6129,6 @@ function Survivor() {
         data.exploding = false;
         data.exploded = true;
 
-        // utils.css.swap(o, css.exploding, css.exploded);
-
         utils.css.remove(o, css.exploding);
 
         dieComplete();
@@ -6528,31 +6160,24 @@ function Survivor() {
 
         // frameCount++;
 
-        // if (frameCount % 2 === 0) {
+        // individual turret + base destruction animation
 
-          // individual turret + base destruction animation
+        o.style.backgroundPosition = '0px ' + (-32 * data.explosionFrame) + 'px';
 
-          o.style.backgroundPosition = '0px ' + (-32 * data.explosionFrame) + 'px';
+        data.explosionFrame++;
 
-          data.explosionFrame++;
+        if (data.explosionFrame >= data.explosionFrames) {
 
-          if (data.explosionFrame >= data.explosionFrames) {
+          data.explosionFrame = 0;
 
-            data.explosionFrame = 0;
+          if (!data.baseExploding) {
 
-            if (!data.baseExploding) {
-
-              // end the animation.
-              explodeComplete();
-
-            }
+            // end the animation.
+            explodeComplete();
 
           }
-
-        // }
-
+        }
       }
-
     }
 
     function init() {
@@ -6627,10 +6252,9 @@ function Survivor() {
   function Base() {
 
     /**
-     * an object made up of walls and turrets
+     * An object made up of walls and turrets
      * explodes once all turrets have been destroyed
      */
-
     var objects = {
       walls: [],
       turrets: []
@@ -6645,27 +6269,6 @@ function Survivor() {
       points: 10000
     };
 
-/*
-    var css = {
-
-      wall: {
-        base: 'wall',
-        up: 'wall-up',
-        down: 'wall-down',
-        left: 'wall-left',
-        right: 'wall-right'
-      },
-
-      turret: {
-        base: 'turret',
-        up: 'turret-up',
-        down: 'turret-down',
-        left: 'turret-left',
-        right: 'turret-right'
-      }
-
-    };
-*/
     var typeToConstructor = {
       'wall': BaseWall,
       'turret': Turret
@@ -6994,7 +6597,6 @@ function Survivor() {
           game.objects.gameLoop.nextPulseStage();
 
           // and resume (seems redundant)
-          // TODO: Remove this.
           game.objects.gameLoop.startTimer();
 
         }
@@ -7049,7 +6651,6 @@ function Survivor() {
       // we now know what base style, type and "direction" of object we're dealing with.
       baseType = itemData[0];
 
-      // console.log('adding base item for character "' + char + '" at row ' + row + ', col ' + col + ': ' + itemData.join(', '));
 
       // add one wall or turret to a base object.
       baseItemObject = objects.basesHash[baseType].addItem({
@@ -7141,18 +6742,9 @@ function Survivor() {
 
     function addEvents() {
 
-      // release keys, mute audio and pause game on window blur
-      if (isIE) {
-
-        utils.events.add(document, 'focusin', events.focus);
-        utils.events.add(document, 'focusout', events.blur);
-
-      } else {
-
-        utils.events.add(window, 'focus', events.focus);
-        utils.events.add(window, 'blur', events.blur);
-
-      }
+      // release keys and pause game on window blur
+      utils.events.add(window, 'focus', events.focus);
+      utils.events.add(window, 'blur', events.blur);
 
     }
 
@@ -7816,55 +7408,6 @@ function Survivor() {
 
   }
 
-  function assignHelpLink() {
-
-    var oHelp = document.getElementById('help');
-
-    function mouseDownHandler(e) {
-
-      var o,
-          oBody;
-
-      var className = 'show-help';
-
-      var is_showing = utils.css.has(document.body, className);
-
-      if (!is_showing) {
-
-        utils.css.add(document.body, className);
-
-        o = document.getElementById('help-screen');
-        oBody = o.getElementsByTagName('div')[0];
-
-        oBody.style.marginTop = -parseInt(oBody.offsetHeight/2, 10) + 'px';
-
-        game.objects.gameLoop.pause();
-
-      } else {
-
-        utils.css.remove(document.body, className);
-
-        game.objects.gameLoop.resume();
-
-      }
-
-      stopEvent(e);
-
-      return false;
-
-    }
-
-    if (oHelp) {
-
-      oHelp.onmousedown = mouseDownHandler;
-
-      // and get the help screen, too
-      document.getElementById('help-screen').onclick = mouseDownHandler;
-
-    }
-
-  }
-
   function init() {
 
     game.objects.gameLoop = new GameLoop();
@@ -7942,8 +7485,6 @@ function Survivor() {
 
     assignRemixLink();
 
-    assignHelpLink();
-
     // start game loop
     game.objects.gameLoop.init();
 
@@ -7957,154 +7498,6 @@ function Survivor() {
 
 }
 
-function go_go_go() {
-
-  // function name: inside Flickr-circa-2004 joke.
-
-  // hackish: bypass loading / intro screens if noIntro, or if mapData and offline (file://) etc.
-
-  var tweeter = document.getElementById('tweeter');
-
-  var bypassIntro = (
-        document.location.href.match(/nointro/i)
-        || (document.referrer && document.referrer.match(/editor/i))
-        || ((!document.location.protocol.match(/http/i) && document.location.href.match(/mapdata/i)))
-      ),
-      l0 = document.getElementById('loading0'),
-      l1 = document.getElementById('loading1'),
-      l2 = document.getElementById('loading2');
-
-  document.getElementById('cursor').style.display = 'none';
-
-  function startGame() {
-
-    survivor = new Survivor();
-    survivor.init();
-    document.getElementById('world-container').style.display = 'block';
-
-  }
-
-  function hideGameTitleScreen() {
-
-    var boot = document.getElementById('boot-screen');
-    var title = document.getElementById('title-screen');
-
-    boot.parentNode.removeChild(boot);
-    title.parentNode.removeChild(title);
-
-  }
-
-  function showGameTitleScreen() {
-
-    var title = document.getElementById('title-screen');
-    var c64 = document.getElementById('c64');
-
-    title.style.display = 'block';
-
-    c64.parentNode.removeChild(c64);
-
-    title.onclick = function() {
-      hideGameTitleScreen();
-      startGame();
-    };
-
-  }
-
-  if (bypassIntro) {
-
-    // go directly to the game.
-    hideGameTitleScreen();
-    startGame();
-
-    // and show the "tweeter" link, encouraging creators to share (maybe)
-    if (tweeter && !winloc.match(/temp/i)) {
-
-      tweeter.style.display = 'inline';
-
-      // old-skool.
-      tweeter.onclick = function(e) {
-
-        var webCirca1999,
-            msg,
-            serviceURL,
-            str,
-            mapData,
-            xhr;
-
-        str = decodeURI(winloc);
-
-        mapData = str.substr(str.indexOf('mapData')+8);
-
-        serviceURL = 'https://twitter.com/share/?text=';
-
-        msg = 'I designed an 80\'s-era arcade game level. Think you can beat it? Play and remix it here.';
-
-        xhr = new window.XMLHttpRequest();
-
-        xhr.onreadystatechange = function() {
-
-          var json;
-
-          if (xhr.readyState !== 4) {
-            return;
-          }
-
-          if (xhr.status !== 200 && xhr.status !== 304) {
-            console('HTTP error ' + xhr.status);
-            return;
-          }
-
-          json = JSON.parse(xhr.responseText);
-
-          if (json && json.data && json.data.url) {
-
-            // go to the proper sharing URL
-            webCirca1999.go(serviceURL + encodeURIComponent(msg) + '&url=' + json.data.url);
-
-          }
-
-        };
-
-        // open ze window
-        webCirca1999 = window.open('shorturl/blank.html', 'survivorTweetWindow', 'width=640,height=250');
-
-        // get the short URL
-        xhr.open('GET', 'shorturl/?url=' + mapData, true);
-
-        // true = post? I forget.
-        xhr.send();
-
-        // hack?
-        if (e.preventDefault) {
-          e.preventDefault();
-        } else {
-          e.returnValue = false;
-          e.cancelBubble = true;
-        }
-
-        return false;
-
-      };
-
-    }
-
-    return false;
-
-  }
-
-
-
-  l0.style.display = 'block';
-  l1.style.display = 'block';
-  l2.style.display = 'block';
-
-  document.getElementById('go_go_go').style.display = 'block';
-
-  window.setTimeout(showGameTitleScreen, 2500);
-
-}
-
-setTimeout(go_go_go, 1000);
-
-// invocation closure
-}(window));
+survivor = new Survivor();
+survivor.init();
+document.getElementById('world-container').style.display = 'block';

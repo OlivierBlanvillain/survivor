@@ -12,7 +12,6 @@
     ?interval=1 - force setInterval() instead of requestAnimationFrame (if available)
   -->
   <link rel="stylesheet" href="css/survivor.css" />
-  <script src="script/survivor.js"></script>
 </head>
 
 <body>
@@ -22,96 +21,6 @@
 <div id="screens">
 
  <ul id="screen-list">
-
-  <li id="boot-screen">
-
-   <div id="c64">
-
-    <div id="c64-body">
-
-     <h1>**** COMMODORE 64 BASIC V2 ****</h1>
-  
-     <h2>64K RAM SYSTEM&nbsp;&nbsp;38911 BASIC BYTES FREE</h2>
-
-     <p>READY.<p>
-
-     <div id="loading0" class="loading">
-
-      <p>LOAD"SURVIVOR-2012",8,1</p>
-
-      <br />
-
-     </div>
-
-     <p id="loading1" class="loading">SEARCHING FOR SURVIVOR-2012</p>
-
-     <p id="loading2" class="loading">LOADING</p>
-
-     <div id="go_go_go">
-
-      <p>READY.</p>
-
-      <p>RUN</p>
-
-     </div>
-
-    </div>
-
-    <div id="cursor"></div>
-
-   </div>
-
-  </li>
-
-  <li id="title-screen">
-
-   <div id="title-content">
-
-    <div id="title-header">
-
-     <h1>SURVIVOR 2012</h1>
-
-    </div>
-
-    <h2>A HTML + CSS + JavaScript prototype, based on the Commodore 64 version of Survivor from 1983.</h2>
-
-    <!-- "The marquee element is not valid according to the HTML or XHTML specifications. Page authors concerned with validation should not use this tag." -->
-    <!-- https://developer.mozilla.org/en/HTML/Element/marquee -->
-    <h3>
-     <marquee scrolldelay="60">
-      Original Atari 2600 game by Richard Carr, (C) 1982 Synapse Software. Created for the C64 by Ewing Soft (1983.)
-     </marquee>
-    </h3>
-
-   </div>
-
-  </li>
-
-  <li id="help-screen">
-
-   <div class="c64 bd">
-    <div class="wrapper">
-
-     <p>It's 1982, and you're playing an arcade game. Of course it has a space theme -- it's 1982. Your mission: Destroy everything you can.</p>
-
-     <h3>CONTROLS</h3>
-
-     <p>Arrow keys drive the ship. SHIFT or CTRL can be used to fire (for the fastest firing rate, hold the key down.) Use the SPACE BAR to fire "smartbombs", which will kill any bad guys that happen to be chasing you.</p>
-
-     <h3>HOW TO PLAY</h3>
-
-     <p>The goal: Destroy the bases by shooting out the turrets attached to them. When all turrets are dead on a base, it will explode. When all bases are dead, you will pass the level.</p>
-
-     <p>Avoid crashing into "spaceballs" (green asteroid slimeball-like things), and shoot or steer clear of "bad guys" that will occasionally appear and chase you. As you destroy each, the speed of the game will increase slightly.</p>
-
-     <h3>ABOUT</h3>
-
-     <p>SURVIVOR was originally written for the Atari 2600 home arcade game system in 1982, and was ported in 1983 to the popular Commodore 64 computer system. This is a browser-based remake, written in 2012, that is a tribute to the spirit of the Commodore 64 version. It is a browser-based prototype demonstrating (and admittedly, ironically,) how HTML + CSS + JavaScript can be used to emulate games designed for hardware that existed thirty years prior.</p>
-
-    </div>
-   </div>
-
-  </li>
 
   <li id="level-end-sequence">
     <!-- generated explosion elements end up here -->
@@ -203,17 +112,11 @@
      </div>
 
      <div id="stats">
-      <a id="help" href="#help" onclick="return false" title="Help, keyboard controls and about the game" class="cta help">?</a>
-      <span class="divider">|</span>
-      <a href="http://www.schillmania.com/content/entries/2012/survivor-c64-html-remake/" title="Making-of, development notes, screenshots and background info">More &raquo;</a>
-      <span class="divider">|</span>
       fps: <span id="fps">N/A</span>
      </div>
 
      <div id="game-state">
       <!-- lives, score, smartbombs etc. -->
-      <a id="remix" href="editor.html" title="Create your own level with blocks, walls and turrets" class="cta">Create a level</a>
-      <span class="divider">|</span>
       <span id="original">
        <span id="tweeter">
         <a href="#" title="Looks like you designed something. Challenge your friends to beat it!" onclick="return false" class="cta tweeter">twitter</a>
@@ -227,8 +130,6 @@
       Lives: <span id="lives">0</span>
       <span class="divider">|</span>
       Smartbombs: <span id="smartbombs">0</span>
-      <span class="divider">|</span>
-      Background music: <a href="http://www.youtube.com/watch?v=btPJPFnesV4&amp;list=PLBAB23D461827111C" rel="nofollow" title="Popular songs from 1982 and 1983, when the original 'Survivor' game was released." target="yt_survivor">arcade era</a> (1982-83) / <a href="http://www.youtube.com/watch?v=PWcaPIOiD_0&amp;list=PLB4B5B0B78FB29258" rel="nofollow" title="A few random songs, not limited to 80's hits." target="yt_survivor">modern</a> (2012)
     </div>
 
    </div>
@@ -239,6 +140,7 @@
 
 </div>
 
+<script src="script/survivor.js" data-cover></script>
 </body>
 
 </html>
