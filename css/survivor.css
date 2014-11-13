@@ -912,8 +912,11 @@ body.show-help #world-container {
 }
 
 #stats {
+ position: fixed;
+ top: 0px;
+ right: 0px;
  float: right;
- padding-right: 1.5em;
+ padding: 1.5em;
 }
 
 #original {

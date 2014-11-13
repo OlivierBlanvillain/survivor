@@ -14,24 +14,11 @@ function Survivor() {
       mapTypes,
       mapData,
 
-  // adds debug elements to the grid, UI etc.
-  DEBUG_MODE = (winloc.match(/debug/i)),
-
-  // ?profile=1, ?profiling=1, whatever.
-  PERFORMANCE_MODE = (winloc.match(/profil/i)),
-
-  /**
-   * Chrome-specific GPU-accelerated positioning (vs .style.left + .style.top) and compositing / layer promotion
-   * Safari doesn't like this so much. #usetransform to enable, #notransform to disable.
-   */
-  USE_TRANSFORM = ((navigator.userAgent.match(/chrome/i) && !winloc.match(/notransform/i)) || winloc.match(/usetransform/i)),
-
   /**
    * Additional: translate3d() for block / world pulse effect, attempt at GPU compositing / reducing paints. Step-based keyframe animations for pulse effect, as well.
    * Performs worse as of 06/2013, presumably due to doubled number of DOM elements (~1100) and thus expensive "recalculate style" work.
    * Related screenshot: http://flic.kr/p/eHbgpf
    */
-  USE_EXPERIMENTAL_TRANSFORM = (winloc.match(/experimentaltransform/i)),
 
   DEFAULT_LIVES = 3,
   DEFAULT_SMARTBOMBS = 3,
@@ -116,7 +103,6 @@ function Survivor() {
     keyboardMonitor: null,
     levelEndSequence: null,
     mapData: null,
-    gameController: null,
     ship: null,
     shipGunfireMap: null,
     statsController: null,
@@ -151,13 +137,6 @@ function Survivor() {
     worldFragment: document.createDocumentFragment()
 
   };
-
-  if (USE_EXPERIMENTAL_TRANSFORM) { 
-    innerNode = document.createElement('div');
-    innerNode.className = 'transform-sprite';
-    itemTemplate.appendChild(innerNode);
-    gameDom.world.className = 'use-experimental-transforms';
-  }
 
   // for internal reference
   game = {
@@ -555,10 +534,6 @@ function Survivor() {
 
         currentPhase = css['phase' + data.pulseCount];
 
-        if (!USE_EXPERIMENTAL_TRANSFORM) {
-          utils.css.swap(game.dom.world, data.lastPhase, currentPhase);
-        }
-
         data.lastPhase = currentPhase;
 
         if (heartbeatCounter % 2 === 0) {
@@ -791,11 +766,6 @@ function Survivor() {
 
           objects.blocks.splice(i, 1);
 
-          if (PERFORMANCE_MODE || DEBUG_MODE) {
-            console.log('removed animating block; new count: ' + objects.blocks.length);
-
-          }
-
         }
 
       }
@@ -909,7 +879,6 @@ function Survivor() {
       if (!data.dead && data.power) {
 
         data.power--;
-        game.objects.gameController.addPoints(data.points);
         animationStart();
 
       }
@@ -1116,16 +1085,8 @@ function Survivor() {
         if (game.objects.screen.isInView(location.col, location.row)) {
 
 
-          if (USE_TRANSFORM) {
-
-            o.style[features.transform.prop] = 'translate3d(' + Math.floor(x) + 'px, ' + Math.floor(y) + 'px, 0px)';
-
-          } else {
-
-            o.style.left = Math.max(0, Math.floor(x)) + 'px';
-            o.style.top = Math.max(0, Math.floor(y)) + 'px';
-
-          }
+          o.style.left = Math.max(0, Math.floor(x)) + 'px';
+          o.style.top = Math.max(0, Math.floor(y)) + 'px';
 
           show();
 
@@ -2014,7 +1975,6 @@ function Survivor() {
 
       oStats.innerHTML = [
         '<br>',
-        '<p>Your score: ' + game.objects.gameController.getScore() + ' points</p>',
         '<br>',
         '<div class="fixed"><div class="icon type-2 block"></div> Blocks: ' + statsData.block + '</div>',
         '<div class="fixed"><div class="icon type-1 turret right"></div> Turrets: ' + statsData.turret + '</div>'
@@ -3162,9 +3122,6 @@ function Survivor() {
 
       if (overlap.sprite1.xOffset === null || overlap.sprite2.xOffset === null) {
         // exception: null overlap case?
-        if (PERFORMANCE_MODE || DEBUG_MODE) {
-          console.log('pixelCollisionCheck: null overlap/xOffset case');
-        }
         return false;
       }
 
@@ -3188,9 +3145,7 @@ function Survivor() {
 
       var pixel_overlap = false;
 
-      var pixel_test;
       // compare the sprites.
-
       var s1X, s1Y, s2X, s2Y;
 
       for (i=0, j=max_height; i<j && !pixel_overlap; i++) {
@@ -3200,17 +3155,7 @@ function Survivor() {
           s2X = k - overlap.sprite2.xOffset;
           s2Y = i - overlap.sprite2.yOffset;
           if (s1X >= 0 && s1X < sprite1Data.data.width && s1Y >= 0 && s1Y < sprite1Data.data.height && s2X >= 0 && s2X < sprite2Data.data.width && s2Y >= 0 && s2Y < sprite2Data.data.height) {
-            pixel_test = (sprite1Data.check(s1Y, s1X) && sprite2Data.check(s2Y, s2X));
-            if (pixel_test) {
-              if (PERFORMANCE_MODE || DEBUG_MODE) {
-                console.log('FOUND HIT at loop row/col ' + i + ', ' + k +', comparing ' + s1X + ', ' + s1Y + ' to ' + s2X + ', ' + s2Y);
-                console.log('sprite1, sprite2', sprite1, sprite2);
-                console.log('delta X, Y, W, H: ' + deltaX + ', ' + deltaY + ', ' + deltaW + ', ' + deltaH);
-                console.log('overlap data', overlap.sprite1, overlap.sprite2);
-                console.log(sprite1Data.data, sprite2Data.data);
-              }
-              pixel_overlap = true;
-            }
+            pixel_overlap = (sprite1Data.check(s1Y, s1X) && sprite2Data.check(s2Y, s2X));
           }
         }
       }
@@ -3322,20 +3267,13 @@ function Survivor() {
 
         location = game.objects.collision.xyToRowCol(x, y);
 
-        if (USE_TRANSFORM) {
 
-          o.style[features.transform.prop] = 'translate3d(' + Math.floor(x) + 'px, ' + Math.floor(y) + 'px, 0px)';
+        if (data.lastX !== x) {
+          o.style.left = x + 'px';
+        }
 
-        } else {
-
-          if (data.lastX !== x) {
-            o.style.left = x + 'px';
-          }
-
-          if (data.lastY !== y) {
-            o.style.top = y + 'px';
-          }
-
+        if (data.lastY !== y) {
+          o.style.top = y + 'px';
         }
 
         data.lastX = x;
@@ -4190,18 +4128,10 @@ function Survivor() {
 
       // minus one man. next screen, game over, etc.?
 
-      var isGameOver;
-
-      isGameOver = game.objects.gameController.shipDied();
-
-      if (!isGameOver) {
-
-        window.setTimeout(function() {
-          findSafeRespawnLocation();
-          reset();
-        }, 500);
-
-      }
+      window.setTimeout(function() {
+        findSafeRespawnLocation();
+        reset();
+      }, 500);
 
     }
 
@@ -5036,16 +4966,8 @@ function Survivor() {
           endX = data.turretX + x;
           endY = data.turretY + y;
 
-          if (USE_TRANSFORM) {
-
-            o.style[features.transform.prop] = 'translate3d(' + endX + 'px, ' + endY + 'px, 0px)';
-
-          } else {
-
-            o.style.left = endX + 'px';
-            o.style.top = endY + 'px';
-
-          }
+          o.style.left = endX + 'px';
+          o.style.top = endY + 'px';
 
           show();
 
@@ -5419,8 +5341,6 @@ function Survivor() {
 
       explode();
 
-      game.objects.gameController.addPoints(data.points);
-
       game.objects.statsController.record('turret');
 
       // don't let gunfire respawn?
@@ -5716,12 +5636,6 @@ function Survivor() {
       }
 
       data.dying = true;
-
-      game.objects.gameController.addPoints(data.points);
-
-      // increase ship lives as a reward
-      game.objects.gameController.data.lives += 3;
-      game.objects.gameController.refreshUI();
 
       game.objects.statsController.record('base');
 
@@ -6113,151 +6027,6 @@ function Survivor() {
 
   }
 
-  function GameController() {
-
-    var data = {
-      score: 0,
-      lives: DEFAULT_LIVES
-    };
-
-    var dom = {
-      lives: null,
-      points: null
-    };
-
-    function getScore() {
-
-      return data.score;
-
-    }
-
-    function updatePoints() {
-
-      if (dom.points) {
-        dom.points.innerHTML = data.score;
-      }
-
-    }
-
-    function addPoints(points) {
-
-      data.score += points;
-      updatePoints();
-
-    }
-
-    function updateLives() {
-
-      if (dom.lives) {
-        dom.lives.innerHTML = data.lives;
-      }
-
-    }
-
-    function shipDied() {
-
-      var o,
-          oStats,
-          oStatsBody,
-          statsData;
-
-      var isGameOver = false;
-
-      data.lives--;
-
-      updateLives();
-
-      if (data.lives <= 0) {
-
-        // game over man, game over!
-
-        o = document.getElementById('game-over-screen');
-        oStats = document.getElementById('game-over-stats');
-        oStatsBody = o.getElementsByTagName('div')[0];
-        statsData = game.objects.statsController.getStats();
-
-        isGameOver = true;
-
-        oStats.innerHTML = [
-          '<br>',
-          '<p>Your score: ' + game.objects.gameController.getScore() + ' points</p>',
-          '<br>',
-          '<p>Destruction report:</p>',
-          '<div class="fixed"><div class="icon type-2 block"></div> Blocks: ' + statsData.block + '</div>',
-          '<div class="fixed"><div class="icon type-1 turret right"></div> Turrets: ' + statsData.turret + '</div>',
-          '<div class="fixed"><div class="icon type-1 wall rightDown"></div> Bases: ' + statsData.base + '</div>'
-        ].join('');
-        
-        o.style.display = 'block';
-
-        // position
-        oStatsBody.style.marginTop = -parseInt(oStats.offsetHeight/2, 10) + 'px';
-
-        // objects.gameLoop.pause();
-
-        document.onclick = function() {
-
-          // game reset? title screen?
-
-          document.onclick = null;
-
-          o.style.display = 'none';
-
-          // reset the whole (entire) game
-
-          survivor.reset();
-
-          game.objects.gameLoop.resume();
-
-        };
-        
-      }
-
-      return isGameOver;
-
-    }
-
-    function refreshUI() {
-
-      updateLives();
-      updatePoints();
-
-    }
-
-    function reset() {
-
-      // assign defaults to data like lives.
-
-      data.score = 0;
-      data.lives = DEFAULT_LIVES;
-
-      refreshUI();
-
-    }
-
-    function init() {
-
-      dom.lives = document.getElementById('lives');
-      dom.points = document.getElementById('points');
-
-      refreshUI();
-
-    }
-
-    return {
-
-      addPoints: addPoints,
-      data: data,
-      init: init,
-      getScore: getScore,
-      refreshUI: refreshUI,
-      reset: reset,
-      shipDied: shipDied
-
-    };
-
-  }
-
   function StatsController() {
 
     var data = {
@@ -6294,136 +6063,6 @@ function Survivor() {
 
   }
 
-  (function debugPanel() {
-
-    var data = {
-
-      timer: null,
-      timerInterval: 1000
-
-    };
-
-    var dom = {
-
-      divCount: null,
-      divBlockCount: null,
-      divWallCount: null,
-      divTurretCount: null,
-      turretFireCount: null,
-      spaceballCount: null,
-
-    };
-
-    function handleChange(e) {
-
-      e = e || window.event;
-
-      if (e.target && e.target.type === 'checkbox') {
-
-        // depending on checked state, add or remove the target ID as a className on the world.
-
-        utils.css[e.target.checked ? 'add' : 'remove'](game.dom.world, e.target.id);
-
-      }
-
-    }
-
-    function refreshStats() {
-
-      var i, j, k, l,
-          onScreen = 0,
-          bases;
-
-      bases = game.objects.baseController.objects.bases;
-
-      for (i=0, j=bases.length; i<j; i++) {
-        for (k=0, l=bases[i].objects.turrets.length; k<l; k++) {
-          if (!bases[i].objects.turrets[k].objects.turretGunfire.data.dead && game.objects.screen.isInView(bases[i].objects.turrets[k].objects.turretGunfire.data.col, bases[i].objects.turrets[k].objects.turretGunfire.data.row)) {
-            onScreen++;
-          }
-        }
-      }
-
-      dom.divCount.innerHTML = document.querySelectorAll('#world div').length;
-
-      dom.divBlockCount.innerHTML = document.querySelectorAll('#world div.block').length;
-
-      dom.divWallCount.innerHTML = document.querySelectorAll('#world div.wall').length - document.querySelectorAll('#world div.wall.exploded').length;
-
-      dom.divTurretCount.innerHTML = document.querySelectorAll('#world div.turret').length;
-
-      dom.turretFireCount.innerHTML = onScreen;
-
-      onScreen = 0;
-
-      for (i=0, j=game.objects.spaceBalls.length; i<j; i++) {
-        if (game.objects.screen.isInView(game.objects.spaceBalls[i].data.col, game.objects.spaceBalls[i].data.row)) {
-          onScreen++;
-        }
-      }
-
-      dom.spaceballCount.innerHTML = onScreen;
-
-      onScreen = 0;
-
-    }
-
-    function startTimer() {
-
-      data.timer = window.setInterval(refreshStats, data.timerInterval);
-
-    }
-
-    function init() {
-
-      var o, i, j,
-          items;
-
-      o = document.getElementById('debug-panel');
-
-      if (!o) {
-        return false;
-      }
-
-      if (!PERFORMANCE_MODE) {
-
-        // not needed - remove from the DOM altogether.
-        o.parentNode.removeChild(o);
-
-      } else {
-
-        // reset checkboxes, etc.
-        o.getElementsByTagName('form')[0].reset();
-
-        items = o.getElementsByTagName('input');
-
-        for (i=0, j=items.length; i<j; i++) {
-
-          utils.events.add(items[i], 'click', handleChange);
-
-        }
-
-        // show the UI.
-        o.style.display = 'block';
-
-        dom.divCount = document.getElementById('debug-div-count');
-        dom.divBlockCount = document.getElementById('debug-div-block-count');
-        dom.divWallCount = document.getElementById('debug-div-wall-count');
-        dom.divTurretCount = document.getElementById('debug-div-turret-count');
-        dom.turretFireCount = document.getElementById('debug-turret-fire-count');
-        dom.spaceballCount = document.getElementById('debug-spaceball-count');
-
-        startTimer();
-
-      }
-
-    }
-
-    init();
-
-
-  }());
-
   function createSpaceBalls() {
 
     var i, j, k, l,
@@ -6445,25 +6084,6 @@ function Survivor() {
           });
         }
       }
-    }
-
-    if (DEBUG_MODE) {
-
-      // highlight empty spaces
-
-      x = document.createElement('div');
-      x.style.position = 'absolute';
-      x.style.width = '31px';
-      x.style.height = '31px';
-      x.style.border = '1px solid #66ff66';
-      // x.style.background = '#006600';
-      for (i=0, j=freeSpaces.length; i<j; i++) {
-        tmp = x.cloneNode(false);
-        tmp.style.left = (freeSpaces[i].col * game.data.NODE_WIDTH) + 'px';
-        tmp.style.top = (freeSpaces[i].row * game.data.NODE_HEIGHT) + 'px';
-        game.dom.worldFragment.appendChild(tmp);
-      }
-
     }
 
     for (i=0, j=spaceBallCount; i<j; i++) {
@@ -6621,8 +6241,6 @@ function Survivor() {
 
     game.objects.statsController.reset();
 
-    game.objects.gameController.reset();
-
     game.objects.ship.setDefaultPosition();
 
     game.objects.ship.findSafeRespawnLocation();
@@ -6691,12 +6309,6 @@ function Survivor() {
 
     createSpaceBalls();
 
-    // shall we use GPU acceleration tricks based on Chrome's DevTools?
-    if (USE_TRANSFORM) {
-      console.log('using Chrome-specific CSS3 transforms for GPU acceleration');
-      utils.css.add(game.dom.world, 'use-transform');
-    }
-
     // append fragment containing everything to DOM
 
     game.dom.world.appendChild(game.dom.worldFragment);
@@ -6721,9 +6333,6 @@ function Survivor() {
     game.objects.levelEndSequence = new LevelEndSequence({
       node: document.getElementById('level-end-sequence')
     });
-
-    game.objects.gameController = new GameController();
-    game.objects.gameController.init();
 
     assignRemixLink();
 
