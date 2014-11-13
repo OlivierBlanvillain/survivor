@@ -14,12 +14,6 @@ function Survivor() {
       mapTypes,
       mapData,
 
-  /**
-   * Additional: translate3d() for block / world pulse effect, attempt at GPU compositing / reducing paints. Step-based keyframe animations for pulse effect, as well.
-   * Performs worse as of 06/2013, presumably due to doubled number of DOM elements (~1100) and thus expensive "recalculate style" work.
-   * Related screenshot: http://flic.kr/p/eHbgpf
-   */
-
   DEFAULT_LIVES = 3,
   DEFAULT_SMARTBOMBS = 3,
   DEFAULT_HOME_ROW = 20,
@@ -520,11 +514,6 @@ function Survivor() {
 
         var currentPhase;
 
-        // don't animate the world if the ship is dying/dead.
-        if (!game.objects.ship.isAlive()) {
-          return false;
-        }
-
         // the world heartbeat, per se.
         data.pulseCount++;
 
@@ -533,6 +522,8 @@ function Survivor() {
         }
 
         currentPhase = css['phase' + data.pulseCount];
+
+        utils.css.swap(game.dom.world, data.lastPhase, currentPhase);
 
         data.lastPhase = currentPhase;
 
@@ -4559,10 +4550,6 @@ function Survivor() {
 
     }
 
-    function initSound() {
-
-    }
-
     function init() {
 
       o = document.createElement('div');
@@ -4573,8 +4560,6 @@ function Survivor() {
       game.dom.worldFragment.appendChild(o);
 
       show();
-
-      initSound();
 
     }
 
