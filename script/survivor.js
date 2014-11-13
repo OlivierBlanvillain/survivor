@@ -119,7 +119,6 @@ function Survivor() {
     gameController: null,
     ship: null,
     shipGunfireMap: null,
-    smartbombController: null,
     statsController: null,
     turretGunfireMap: null,
     screen: null,
@@ -533,8 +532,6 @@ function Survivor() {
         game.objects.baseController.events.animate();
 
         game.objects.blockController.animate();
-
-        game.objects.smartbombController.animate();
 
         animateSpaceBalls();
 
@@ -1728,17 +1725,6 @@ function Survivor() {
         }
 
       },
-
-      // space bar!
-      '32': {
-
-        down: function() {
-
-          game.objects.smartbombController.fire();
-
-        }
-
-      }
 
     };
 
@@ -3744,8 +3730,7 @@ function Survivor() {
         left: false,
         right: false
       },
-      firing: false,
-      smartbombs: DEFAULT_SMARTBOMBS // by default, armed with these many...
+      firing: false
     };
 
     var objects = {
@@ -5734,9 +5719,8 @@ function Survivor() {
 
       game.objects.gameController.addPoints(data.points);
 
-      // increase ship lives, smartbombs etc. as a reward
+      // increase ship lives as a reward
       game.objects.gameController.data.lives += 3;
-      game.objects.ship.data.smartbombs += 2;
       game.objects.gameController.refreshUI();
 
       game.objects.statsController.record('base');
@@ -6138,8 +6122,7 @@ function Survivor() {
 
     var dom = {
       lives: null,
-      points: null,
-      smartbombs: null
+      points: null
     };
 
     function getScore() {
@@ -6167,14 +6150,6 @@ function Survivor() {
 
       if (dom.lives) {
         dom.lives.innerHTML = data.lives;
-      }
-
-    }
-
-    function updateSmartbombs() {
-
-      if (dom.smartbombs) {
-        dom.smartbombs.innerHTML = game.objects.ship.data.smartbombs;
       }
 
     }
@@ -6246,15 +6221,13 @@ function Survivor() {
 
       updateLives();
       updatePoints();
-      updateSmartbombs();
 
     }
 
     function reset() {
 
-      // assign defaults to data like lives, smartbombs etc.
+      // assign defaults to data like lives.
 
-      game.objects.ship.data.smartbombs = DEFAULT_SMARTBOMBS;
       data.score = 0;
       data.lives = DEFAULT_LIVES;
 
@@ -6266,7 +6239,6 @@ function Survivor() {
 
       dom.lives = document.getElementById('lives');
       dom.points = document.getElementById('points');
-      dom.smartbombs = document.getElementById('smartbombs');
 
       refreshUI();
 
@@ -6280,70 +6252,8 @@ function Survivor() {
       getScore: getScore,
       refreshUI: refreshUI,
       reset: reset,
-      shipDied: shipDied,
-      updateSmartbombs: updateSmartbombs
+      shipDied: shipDied
 
-    };
-
-  }
-
-  function SmartbombController() {
-
-    var data = {
-      active: false,
-      flashColor: '#fff',
-      frame: 0,
-      frameCount: 4
-    };
-
-    function animate() {
-
-      if (data.active) {
-
-        data.frame++;
-
-        if (data.frame <= data.frameCount) {
-
-          game.dom.world.style.backgroundColor = (data.frame % 2 === 0 ? data.flashColor : 'transparent');
-
-        } else {
-
-          game.dom.world.style.backgroundColor = 'transparent';
-
-          data.frame = 0;
-
-          data.active = false;
-
-        }
-
-      }
-
-    }
-
-    function fire() {
-
-      // play noise, decrement and so forth
-
-      if (!data.active && game.objects.ship.data.smartbombs > 0) {
-
-        data.active = true;
-
-        game.objects.ship.data.smartbombs--;
-
-        // update the status bar UI
-        game.objects.gameController.updateSmartbombs();
-
-      } else {
-
-        console.log('no more smartbombs');
-
-      }
-
-    }
-
-    return {
-      animate: animate,
-      fire: fire
     };
 
   }
@@ -6811,8 +6721,6 @@ function Survivor() {
     game.objects.levelEndSequence = new LevelEndSequence({
       node: document.getElementById('level-end-sequence')
     });
-
-    game.objects.smartbombController = new SmartbombController();
 
     game.objects.gameController = new GameController();
     game.objects.gameController.init();
