@@ -10,3 +10,9 @@ image/explosion*.*
 image/spaceball.png
 audio
 shorturl
+
+target/
+.cache
+.classpath
+.project
+.settings/

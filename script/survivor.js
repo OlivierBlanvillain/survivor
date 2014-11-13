@@ -14,47 +14,45 @@ function Survivor() {
       mapTypes,
       mapData,
 
-      // adds debug elements to the grid, UI etc.
-      DEBUG_MODE = (winloc.match(/debug/i)),
+  // adds debug elements to the grid, UI etc.
+  DEBUG_MODE = (winloc.match(/debug/i)),
 
-      // ?profile=1, ?profiling=1, whatever.
-      PERFORMANCE_MODE = (winloc.match(/profil/i)),
+  // ?profile=1, ?profiling=1, whatever.
+  PERFORMANCE_MODE = (winloc.match(/profil/i)),
 
-      /**
-       * Chrome-specific GPU-accelerated positioning (vs .style.left + .style.top) and compositing / layer promotion
-       * Safari doesn't like this so much. #usetransform to enable, #notransform to disable.
-       */
-      USE_TRANSFORM = ((navigator.userAgent.match(/chrome/i) && !winloc.match(/notransform/i)) || winloc.match(/usetransform/i)),
+  /**
+   * Chrome-specific GPU-accelerated positioning (vs .style.left + .style.top) and compositing / layer promotion
+   * Safari doesn't like this so much. #usetransform to enable, #notransform to disable.
+   */
+  USE_TRANSFORM = ((navigator.userAgent.match(/chrome/i) && !winloc.match(/notransform/i)) || winloc.match(/usetransform/i)),
 
-      /**
-       * Additional: translate3d() for block / world pulse effect, attempt at GPU compositing / reducing paints. Step-based keyframe animations for pulse effect, as well.
-       * Performs worse as of 06/2013, presumably due to doubled number of DOM elements (~1100) and thus expensive "recalculate style" work.
-       * Related screenshot: http://flic.kr/p/eHbgpf
-       */
-      USE_EXPERIMENTAL_TRANSFORM = (winloc.match(/experimentaltransform/i)),
+  /**
+   * Additional: translate3d() for block / world pulse effect, attempt at GPU compositing / reducing paints. Step-based keyframe animations for pulse effect, as well.
+   * Performs worse as of 06/2013, presumably due to doubled number of DOM elements (~1100) and thus expensive "recalculate style" work.
+   * Related screenshot: http://flic.kr/p/eHbgpf
+   */
+  USE_EXPERIMENTAL_TRANSFORM = (winloc.match(/experimentaltransform/i)),
 
-      DEFAULT_LIVES = 3,
-      DEFAULT_SMARTBOMBS = 3,
-      DEFAULT_HOME_ROW = 20,
-      DEFAULT_HOME_COL = 8,
-      DEFAULT_SPACEBALLS = 8,
+  DEFAULT_LIVES = 3,
+  DEFAULT_SMARTBOMBS = 3,
+  DEFAULT_HOME_ROW = 20,
+  DEFAULT_HOME_COL = 8,
+  DEFAULT_SPACEBALLS = 8,
 
-      spaceBallTemplate,
-      spaceBallCounter = 0,
-      lastAudioIncrement = new Date(),
+  spaceBallTemplate,
+  spaceBallCounter = 0,
+  lastAudioIncrement = new Date(),
 
-      /**
-      * NOTE: UTF-8 character encoding required for map parsing to work.
-      * reference: http://en.wikipedia.org/wiki/Box-drawing_characters
-      * empty space inside walls is marked by a period character - "."
-      * space inside bases, not safe to be occupied is marked by a middle dot - Georgian comma (&middot;) - "·"
-      */
+  /**
+  * NOTE: UTF-8 character encoding required for map parsing to work.
+  * reference: http://en.wikipedia.org/wiki/Box-drawing_characters
+  * empty space inside walls is marked by a period character - "."
+  * space inside bases, not safe to be occupied is marked by a middle dot - Georgian comma (&middot;) - "·"
+  */
 
-      MAP_FREE_SPACE_CHAR = ' ',
-      MAP_ALT_FREE_SPACE_CHAR = '_',
-      MAP_INSIDE_BASE_CHAR = '·';
-
-  // var MAP_INSIDE_WALLS_CHAR = '.';
+  MAP_FREE_SPACE_CHAR = ' ',
+  MAP_ALT_FREE_SPACE_CHAR = '_',
+  MAP_INSIDE_BASE_CHAR = '·';
 
   mapData = [
     '                                                                         ',
@@ -112,7 +110,6 @@ function Survivor() {
 
     // instances of controllers, major objects and so forth
     baseController: null,
-    badGuyController: null,
     blockController: null,
     gameLoop: null,
     focusMonitor: null,
@@ -125,8 +122,6 @@ function Survivor() {
     smartbombController: null,
     statsController: null,
     turretGunfireMap: null,
-    badGuyMap: null,
-    badGuys: [],
     screen: null,
     spaceBalls: [],
     spaceBallMap: null
@@ -176,97 +171,97 @@ function Survivor() {
 
   var utils;
 
-  utils = {
+    utils = {
 
-    css: (function() {
+      css: (function() {
 
-      function hasClass(o, cStr) {
+        function hasClass(o, cStr) {
 
-        return (o.className !== undefined ? new RegExp('(^|\\s)'+cStr+'(\\s|$)').test(o.className) : false);
+          return (o.className !== undefined ? new RegExp('(^|\\s)'+cStr+'(\\s|$)').test(o.className) : false);
 
-      }
-
-      function addClass(o, cStr) {
-
-        if (!o || !cStr || hasClass(o,cStr)) {
-          return false; // safety net
         }
-        o.className = (o.className?o.className+' ':'')+cStr;
 
-      }
+        function addClass(o, cStr) {
 
-      function removeClass(o, cStr) {
+          if (!o || !cStr || hasClass(o,cStr)) {
+            return false; // safety net
+          }
+          o.className = (o.className?o.className+' ':'')+cStr;
 
-        if (!o || !cStr || !hasClass(o,cStr)) {
-          return false;
         }
-        o.className = o.className.replace(new RegExp('( '+cStr+')|('+cStr+')','g'),'');
 
-      }
+        function removeClass(o, cStr) {
 
-      function swapClass(o, cStr1, cStr2) {
+          if (!o || !cStr || !hasClass(o,cStr)) {
+            return false;
+          }
+          o.className = o.className.replace(new RegExp('( '+cStr+')|('+cStr+')','g'),'');
 
-        var tmpClass = {
-          className: o.className
+        }
+
+        function swapClass(o, cStr1, cStr2) {
+
+          var tmpClass = {
+            className: o.className
+          };
+
+          removeClass(tmpClass, cStr1);
+          addClass(tmpClass, cStr2);
+
+          o.className = tmpClass.className;
+
+        }
+
+        function toggleClass(o, cStr) {
+
+          (hasClass(o, cStr)?removeClass:addClass)(o, cStr);
+
+        }
+
+        return {
+          has: hasClass,
+          add: addClass,
+          remove: removeClass,
+          swap: swapClass,
+          toggle: toggleClass
         };
 
-        removeClass(tmpClass, cStr1);
-        addClass(tmpClass, cStr2);
+      }()),
 
-        o.className = tmpClass.className;
+      events: (function() {
 
-      }
+        var add, remove, preventDefault;
 
-      function toggleClass(o, cStr) {
+        add = (window.addEventListener !== undefined ? function(o, evtName, evtHandler) {
+          return o.addEventListener(evtName,evtHandler,false);
+        } : function(o, evtName, evtHandler) {
+          o.attachEvent('on'+evtName,evtHandler);
+        });
 
-        (hasClass(o, cStr)?removeClass:addClass)(o, cStr);
+        remove = (window.removeEventListener !== undefined ? function(o, evtName, evtHandler) {
+          return o.removeEventListener(evtName,evtHandler,false);
+        } : function(o, evtName, evtHandler) {
+          return o.detachEvent('on'+evtName,evtHandler);
+        });
 
-      }
+        preventDefault = function(e) {
+          if (e.preventDefault) {
+            e.preventDefault();
+          } else {
+            e.returnValue = false;
+            e.cancelBubble = true;
+          }
+        };
 
-      return {
-        has: hasClass,
-        add: addClass,
-        remove: removeClass,
-        swap: swapClass,
-        toggle: toggleClass
-      };
+        return {
+          add: add,
+          preventDefault: preventDefault,
+          remove: remove
+        };
 
-    }()),
+      }())
 
-    events: (function() {
-
-      var add, remove, preventDefault;
-
-      add = (window.addEventListener !== undefined ? function(o, evtName, evtHandler) {
-        return o.addEventListener(evtName,evtHandler,false);
-      } : function(o, evtName, evtHandler) {
-        o.attachEvent('on'+evtName,evtHandler);
-      });
-
-      remove = (window.removeEventListener !== undefined ? function(o, evtName, evtHandler) {
-        return o.removeEventListener(evtName,evtHandler,false);
-      } : function(o, evtName, evtHandler) {
-        return o.detachEvent('on'+evtName,evtHandler);
-      });
-
-      preventDefault = function(e) {
-        if (e.preventDefault) {
-          e.preventDefault();
-        } else {
-          e.returnValue = false;
-          e.cancelBubble = true;
-        }
-      };
-
-      return {
-        add: add,
-        preventDefault: preventDefault,
-        remove: remove
-      };
-
-    }())
-
-  };
+    };
 
   var features;
 
@@ -536,8 +531,6 @@ function Survivor() {
         }
 
         game.objects.baseController.events.animate();
-
-        game.objects.badGuyController.animate();
 
         game.objects.blockController.animate();
 
@@ -1034,612 +1027,6 @@ function Survivor() {
 
   }
 
-  var badGuyTemplate = document.createElement('div');
-  badGuyTemplate.innerHTML = '<div class="icon"></div>';
-  badGuyTemplate.className = 'bad-guy';
-
-  var badGuyCounter = 0;
-
-  function BadGuy() {
-
-    var o,
-        oIcon,
-        css,
-        data,
-        objectInterface,
-        // for centering around ship
-        centerOffset = 12,
-        counter = 0,
-        nodeParent = game.dom.world;
-
-    css = {
-      'bird': 'bird',
-      'smiley': 'smiley',
-      'x': 'x',
-      'exploding': 'exploding'
-    };
-
-    data = {
-      active: false,
-      dead: false,
-      visible: false,
-      id: 'badGuy' + badGuyCounter++,
-      exploding: false,
-      x: null,
-      y: null,
-      w: 24, // HACK: container is actually 32 (for explosion), character is 24x24.
-      h: 24,
-      containerW: 32,
-      containerH: 32,
-      vX: (game.data.NODE_WIDTH/16 + Math.random() * 0.5) * game.objects.gameLoop.data.GAME_SPEED,
-      vY: (game.data.NODE_HEIGHT/16 + Math.random() * 0.5) * game.objects.gameLoop.data.GAME_SPEED,
-      points: 200,
-      explosionFrame: 0,
-      explosionFrames: 10,
-      jitterX: 0,
-      jitterY: 0,
-      lastX: null,
-      lastY: null,
-      row: null,
-      col: null,
-      type: null,
-      types: ['bird', 'smiley', 'x'],
-      frame: 0,
-      frameCount: 0,
-      frameCounts: {
-        bird: 3,
-        smiley: 3,
-        x: 4
-      }
-    };
-
-    // die when fire hits end of screen?
-
-    function hide() {
-
-      if (data.visible) {
-        data.visible = false;
-        o.style.visibility = 'hidden';
-      }
-
-    }
-
-    function show() {
-
-      if (!data.visible) {
-        data.visible = true;
-        o.style.visibility = 'visible';
-      }
-
-    }
-
-    function getRandomJitter() {
-
-      return parseInt(Math.random() * centerOffset, 10) * Math.random() > 0.5 ? 1 : -1;
-
-    }
-
-    function randomizeJitter() {
-
-      data.jitterX = centerOffset + getRandomJitter();
-      data.jitterY = centerOffset + getRandomJitter();
-
-    }
-
-    function moveTo(x,y) {
-
-      var location;
-
-      if (o) {
-
-        if (game.objects.screen.isInView(data.col, data.row)) {
-
-          o.style.left = Math.floor(x) + 'px';
-          o.style.top = Math.floor(y) + 'px';
-
-          if (counter % 3 === 0) {
-
-            // only apply jitter every so often
-
-            o.style.marginLeft = data.jitterX + 'px';
-            o.style.marginTop = data.jitterY + 'px';
-
-            randomizeJitter();
-
-          } else {
-
-            o.style.marginLeft = centerOffset + 'px';
-            o.style.marginTop = centerOffset + 'px';
-
-          }
-
-          show();
-
-        } else {
-
-          hide();
-
-        }
-
-        data.lastX = x;
-        data.lastY = y;
-
-        location = game.objects.collision.xyToRowCol(x + data.jitterX, y + data.jitterY);
-
-        if (location.col !== data.col || location.row !== data.row) {
-
-          data.col = location.col;
-          data.row = location.row;
-
-          game.objects.badGuyMap.registerLocation({
-            object: objectInterface,
-            id: data.id,
-            col: data.col,
-            row: data.row
-          });
-
-        }
-
-      }
-
-    }
-
-    function moveBy(x,y) {
-
-      // move and do collision check?
-      data.x += (x * game.objects.gameLoop.data.speedMultiplier);
-      data.y += (y * game.objects.gameLoop.data.speedMultiplier);
-
-      moveTo(data.x, data.y);
-
-    }
-
-    function applyFrame(frame) {
-
-      if (oIcon) {
-        oIcon.style.backgroundPosition = '0px ' + (frame * -data.h) + 'px';
-      }
-
-    }
-
-    function applyFrameX(frame) {
-
-      // for horizontal sprites
-
-      if (o) {
-        o.style.backgroundPosition = (frame * -data.containerW) + 'px 0px';
-      }
-
-    }
-
-    function targetPlayer() {
-
-      // home in on player coordinates.
-      var ship = game.objects.ship;
-
-      return {
-        deltaX: (data.x < ship.data.x - (ship.data.w/2) ? 1 : -1),
-        deltaY: (data.y < ship.data.y - (ship.data.h/2) ? 1 : -1)
-      };
-
-    }
-
-    function randomizePosition() {
-
-      // warp to a random row/col. give 'er.
-      var row, col, x, y;
-
-      row = parseInt(Math.random() * game.data.world_rows, 10);
-      col = parseInt(Math.random() * game.data.world_cols, 10);
-
-      x = (col * game.data.NODE_WIDTH);
-      y = (row * game.data.NODE_HEIGHT);
-
-      data.x = x;
-      data.y = y;
-
-      moveTo(x, y);
-
-    }
-
-    function setRandomType() {
-
-      data.type = data.types[parseInt(Math.random() * data.types.length, 10)];
-
-      data.frameCount = data.frameCounts[data.type];
-
-      // append relevant CSS
-      utils.css.add(o, css[data.type]);
-
-    }
-
-    function reset() {
-
-      hide();
-
-      utils.css.remove(css.exploding);
-
-      data.active = false;
-      data.exploding = false;
-      data.explosionFrame = 0;
-
-      moveTo(0,0);
-
-    }
-
-    function startAttack() {
-
-      randomizePosition();
-
-      if (!data.active) {
-        data.active = true;
-      }
-
-    }
-
-    function die() {
-
-      // explosion effect/noise
-      if (!data.dead && !data.exploding) {
-
-        game.objects.gameController.addPoints(data.points);
-
-        data.exploding = true;
-        utils.css.add(o, css.exploding);
-
-        // and remove from the collision map.
-        game.objects.badGuyMap.clearLocation(data.id);
-
-        game.objects.statsController.record('badGuy');
-
-      }
-
-    }
-
-    function collisionCheck() {
-
-      // did the bad guy hit its target, or turret fire, or ?
-
-      var i, j,
-          ship = game.objects.ship,
-          hit = false,
-          turretGunfire = null,
-          thisPoint,
-          fire,
-          // gunfireObject,
-          location;
-
-      if (!data.active || data.exploding || data.dead) {
-        return false;
-      }
-
-      // check ship
-      // check ship gunfire
-      // check turrent gunfire
-      // check other bad guys
-      // check spaceballs?
-
-      thisPoint = {
-        x: data.x + data.jitterX,
-        y: data.y + data.jitterY,
-        w: data.w,
-        h: data.h
-      };
-
-      // did the bad guy hit the ship?
-      hit = game.objects.ship.collisionCheck(thisPoint);
-
-      if (hit) {
-        console.log('bad guy hit the ship');
-        die();
-        ship.die();
-        return true;
-      }
-
-      // did we hit a bullet?
-      fire = game.objects.ship.objects.shipGunfire;
-
-      if (fire.length) {
-
-        for (i=0, j=fire.length; i<j; i++) {
-
-          hit = game.objects.collision.check(thisPoint, {
-            x: fire[i].data.x,
-            y: fire[i].data.y,
-            w: fire[i].data.w,
-            h: fire[i].data.h
-          });
-
-          if (hit) {
-            // we have a winner.
-            // let gunfire pass through, per original game rules.
-            break;
-          }
-
-        }
-
-      }
-
-
-      if (hit) {
-
-        console.log('bad guy hit ship gunfire');
-        die();
-
-      } else {
-
-        // did the bad guy hit turret gunfire?
-
-        // if heading down or right, base coordinates on far edges.
-        location = game.objects.collision.xyToRowCol(data.x + (data.w/2), data.y + (data.h/2));
-        // var location = game.objects.collision.xyToRowCol(data.x, data.y);
-
-        turretGunfire = game.objects.turretGunfireMap.check(location.row, location.col);
-
-        if (turretGunfire) {
-
-          // we have an object. do a collision check.
-          hit = turretGunfire.collisionCheck();
-
-          if (hit) {
-            die();
-          }
-
-        }
-
-      }
-
-      return hit;
-
-    }
-
-    function destruct() {
-
-      // remove from the dom, etc.
-      if (o) {
-        if (o.parentNode) {
-          o.parentNode.removeChild(o);
-        }
-        o = null;
-        oIcon = null;
-      }
-
-    }
-
-    function dead() {
-
-        data.exploding = false;
-        data.dead = true;
-        reset();
-        destruct();
-
-    }
-
-    function animate() {
-
-      var deltas;
-
-      // may be inactive, or died and awaiting cleanup
-      if (!data.active || data.dead) {
-        return false;
-      }
-
-      counter++;
-
-      if (!data.exploding) {
-
-        if (counter % 2 === 0) {
-
-          data.frame++;
-
-          if (data.frame >= data.frameCount) {
-            data.frame = 0;
-          }
-
-          // apply background position
-          applyFrame(data.frame);
-
-        }
-
-        // figure out direction.
-        deltas = targetPlayer();
-
-        // increase frame count, move vX + vY
-        moveBy(data.vX * deltas.deltaX * game.objects.gameLoop.data.GAME_SPEED, data.vY * deltas.deltaY * game.objects.gameLoop.data.GAME_SPEED);
-
-        // and do collision check?
-        collisionCheck();
-
-      } else {
-
-        data.explosionFrame++;
-
-        applyFrameX(data.explosionFrame);
-
-        if (data.explosionFrame >= data.explosionFrames) {
-          // it's all over.
-          dead();
-        }
-
-      }
-
-    }
-
-    function init() {
-
-      if (!o) {
-
-         o = badGuyTemplate.cloneNode(true);
-         oIcon = o.childNodes[0];
-
-        setRandomType();
-
-        nodeParent.appendChild(o);
-
-      }
-
-    }
-
-    // hack/convenience: start right away?
-    init();
-
-    // hack/testing
-    startAttack();
-
-    objectInterface = {
-      animate: animate,
-      collisionCheck: collisionCheck,
-      data: data,
-      die: die,
-      init: init,
-      startAttack: startAttack
-    };
-
-    return objectInterface;
-
-  }
-
-  function BadGuyController() {
-
-    var objects = {
-
-      badGuys: game.objects.badGuys
-
-    };
-
-    function animate() {
-
-      var items = objects.badGuys,
-          i, j;
-
-      for (i=0, j=items.length; i<j; i++) {
-        items[i].animate();
-      }
-
-    }
-
-    function collision() {
-
-    }
-
-    function selfCollisionCheck() {
-
-      // did one bad guy crash into another?
-
-      var items = objects.badGuys,
-          i, j, hit, thisPoint;
-
-      if (items.length) {
-
-        for (j=items.length-1; j>=0; j--) {
-
-          thisPoint = {
-            x: items[j].data.x,
-            y: items[j].data.y,
-            w: items[j].data.w,
-            h: items[j].data.h
-          };
-
-          for (i=items.length-1; i>=0; i--) {
-
-            // don't compare to self, or dead things...
-            if (i !== j && items[i].data.active && !items[i].data.exploding && items[j].data.active && !items[j].data.exploding) {
-
-              hit = game.objects.collision.check(thisPoint, {
-                x: items[i].data.x,
-                y: items[i].data.y,
-                w: items[i].data.w,
-                h: items[i].data.h
-              });
-
-              if (hit) {
-                // double-boom, all the way!
-                items[i].die();
-                items[j].die();
-              }
-
-            }
-
-          }
-
-        }
-
-        if (hit) {
-          collision();
-        }
-
-      }
-
-    }
-
-    function collisionCheck() {
-
-      // check bad guy objects for collision
-      var items = objects.badGuys,
-          i, j;
-
-      var hit;
-
-      if (items.length) {
-
-        for (i=0, j=items.length; i<j; i++) {
-          hit = items[i].collisionCheck();
-          if (hit) {
-            hit = true;
-            break;
-          }
-        }
-
-      }
-
-      if (!hit) {
-        selfCollisionCheck();
-      }
-
-      if (hit) {
-        collision();
-      }
-
-      return hit;
-
-    }
-
-    function createBadGuy() {
-
-      var i;
-
-      // hack: check and clean up any dead ones, first.
-      for (i=0; i<objects.badGuys.length; i++) {
-        if (objects.badGuys[i].data.dead) {
-          objects.badGuys.splice(i, 1);
-        }
-      }
-
-      objects.badGuys.push(new BadGuy());
-
-    }
-
-    function killAll() {
-
-      var i, j;
-      // the effect of a smartbomb.
-      for (i=0, j=objects.badGuys.length; i<j; i++) {
-        objects.badGuys[i].die();
-      }
-
-    }
-
-    return {
-      animate: animate,
-      collisionCheck: collisionCheck,
-      createBadGuy: createBadGuy,
-      killAll: killAll,
-      objects: objects
-    };
-
-  }
-
-  game.objects.badGuyController = new BadGuyController();
 
   spaceBallTemplate = document.createElement('div');
   spaceBallTemplate.className = 'spaceball';
@@ -2644,8 +2031,7 @@ function Survivor() {
         '<p>Your score: ' + game.objects.gameController.getScore() + ' points</p>',
         '<br>',
         '<div class="fixed"><div class="icon type-2 block"></div> Blocks: ' + statsData.block + '</div>',
-        '<div class="fixed"><div class="icon type-1 turret right"></div> Turrets: ' + statsData.turret + '</div>',
-        '<div class="fixed bad-guy smiley"><div class="icon"></div> Bad guys: ' + statsData.badGuy + '</div>'
+        '<div class="fixed"><div class="icon type-1 turret right"></div> Turrets: ' + statsData.turret + '</div>'
       ].join('');
 
       oEnd.style.display = 'block';
@@ -2745,9 +2131,6 @@ function Survivor() {
 
       // and is not a turret gunfire object
       && !game.objects.turretGunfireMap.check(col, row)
-
-      // and is not a bad guy
-      && !game.objects.badGuyMap.check(col, row)
 
       // and is not a spaceball
       && !game.objects.spaceBallMap.check(col, row)
@@ -3901,7 +3284,6 @@ function Survivor() {
     /**
      * "pew pew pew" from the ship.
      * fires bi-directionally based on ship heading (up/down, left/right or diagonals.)
-     * can kill bad guys and turrets.
      */
 
     var objectInterface;
@@ -4193,19 +3575,7 @@ function Survivor() {
 
         }
 
-        // non-"grid" items: bad guys, turret gunfire, spaceballs
-
-        if (!hit) {
-
-          // check bad guys
-          hit = game.objects.badGuyController.collisionCheck();
-
-          if (hit) {
-            // let gunfire pass through bad guys, per original game rules.
-            passThrough = true;
-          }
-
-        }
+        // non-"grid" items: turret gunfire, spaceballs
 
         if (!hit) {
 
@@ -4300,7 +3670,6 @@ function Survivor() {
         }
 
         if (hit && !passThrough) {
-          // kill the gunfire, provided it wasn't a bad guy (which shots can kill and pass through)
           die();
         }
 
@@ -4920,7 +4289,7 @@ function Survivor() {
 
           }
 
-          // is this now dead (or killed elsewhere, ie., hitting a bad guy), and needing clean-up?
+          // is this now dead, and needing clean-up?
           if (objects.shipGunfire[i].data.dead) {
             toRemove.push(i);
           }
@@ -5223,8 +4592,6 @@ function Survivor() {
         gridCollisionCheck();
 
         gunfireCollisionCheck();
-
-        game.objects.badGuyController.collisionCheck();
 
       } else if (data.dying) {
 
@@ -6843,8 +6210,7 @@ function Survivor() {
           '<p>Destruction report:</p>',
           '<div class="fixed"><div class="icon type-2 block"></div> Blocks: ' + statsData.block + '</div>',
           '<div class="fixed"><div class="icon type-1 turret right"></div> Turrets: ' + statsData.turret + '</div>',
-          '<div class="fixed"><div class="icon type-1 wall rightDown"></div> Bases: ' + statsData.base + '</div>',
-          '<div class="fixed bad-guy smiley"><div class="icon"></div> Bad guys: ' + statsData.badGuy + '</div>'
+          '<div class="fixed"><div class="icon type-1 wall rightDown"></div> Bases: ' + statsData.base + '</div>'
         ].join('');
         
         o.style.display = 'block';
@@ -6964,9 +6330,6 @@ function Survivor() {
 
         game.objects.ship.data.smartbombs--;
 
-        // take out any active bad guys
-        game.objects.badGuyController.killAll();
-
         // update the status bar UI
         game.objects.gameController.updateSmartbombs();
 
@@ -6989,7 +6352,6 @@ function Survivor() {
 
     var data = {
       block: 0,
-      badGuy: 0,
       turret: 0,
       base: 0
     };
@@ -7009,7 +6371,6 @@ function Survivor() {
     function reset() {
 
       data.blocks = 0;
-      data.badGuys = 0;
       data.turrets = 0;
       data.bases = 0;
 
@@ -7040,7 +6401,6 @@ function Survivor() {
       divTurretCount: null,
       turretFireCount: null,
       spaceballCount: null,
-      badGuyCount: null
 
     };
 
@@ -7096,14 +6456,6 @@ function Survivor() {
 
       onScreen = 0;
 
-      for (i=0, j=game.objects.badGuyController.objects.badGuys.length; i<j; i++) {
-        if (game.objects.badGuyController.objects.badGuys[i].data.active && game.objects.screen.isInView(game.objects.badGuyController.objects.badGuys[i].data.col, game.objects.badGuyController.objects.badGuys[i].data.row)) {
-          onScreen++;
-        }
-      }
-
-      dom.badGuyCount.innerHTML = onScreen;
-
     }
 
     function startTimer() {
@@ -7150,7 +6502,6 @@ function Survivor() {
         dom.divTurretCount = document.getElementById('debug-div-turret-count');
         dom.turretFireCount = document.getElementById('debug-turret-fire-count');
         dom.spaceballCount = document.getElementById('debug-spaceball-count');
-        dom.badGuyCount = document.getElementById('debug-badguy-count');
 
         startTimer();
 
@@ -7323,23 +6674,11 @@ function Survivor() {
     game.objects.ship.init();
   }
 
-  function makeRandomBadGuy(force) {
-    var isActive = game.objects.gameLoop.isActive();
-    if ((Math.random() < 0.75 || force) && isActive) {
-      console.log('makeRandomBadGuy()');
-      game.objects.badGuyController.createBadGuy();
-    } else if (isActive) {
-      console.log('no bad guy this time around');
-    }
-    setTimeout(makeRandomBadGuy, 10000 + parseInt(Math.random() * 15000, 10));
-  }
-
   function reset() {
 
     // reset the maps
     game.objects.turretGunfireMap.reset();
     game.objects.shipGunfireMap.reset();
-    game.objects.badGuyMap.reset();
     game.objects.spaceBallMap.reset();
 
     // reset and re-append objects to the grid as needed
@@ -7432,16 +6771,11 @@ function Survivor() {
     // 2D array tracking references to moving objects
     game.objects.turretGunfireMap = new ObjectMap();
     game.objects.shipGunfireMap = new ObjectMap();
-    game.objects.badGuyMap = new ObjectMap();
     game.objects.spaceBallMap = new ObjectMap();
 
     console.log('creating ship');
 
     createShip();
-
-    console.log('creating bad guys');
-
-    setTimeout(makeRandomBadGuy, 10000 + parseInt(Math.random() * 15000, 10));
 
     console.log('making spaceballs');
 
