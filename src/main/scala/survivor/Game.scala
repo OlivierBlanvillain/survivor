@@ -1,35 +1,30 @@
 package survivor
 
-import scala.collection.immutable.Queue
-
 object Game {
-  val history = new History()
-  
-  def computeState(inputs: List[Event], time: Int): State = {
-    
-    val state: State = if(time == 0) initialState else {
-      (inputs, history of (inputs, time)) match {
-        case _ => ???
-      }
-    }
-    
-    state
+  def nextState(state: State, inputs: List[Input]): State = {
+    state.copy(time = state.time + 1)
   }
   
-  // def nextState(state: State): State = {
-    
-  // }
-  
-  val initialState: State = State(Ship(32, 32), List())
+  val initialState: State = State(0, Ship(32, 32), List())
 }
 
-class History {
-  private val size = 100
-  private var queue: Queue[(List[Event], Int, State)] = Queue()
-  
-  def of(inputs: List[Event], time: Int): Option[State] =
-    queue.find(e => e._1 == inputs && e._2 == time).map(_._3)
+case class State(time: Int, ship: Ship, gunfires: List[Gunfire])
 
-  def save(inputs: List[Event], time: Int, state: State): Unit =
-    queue = (if(queue.length < size) queue else queue.dequeue._2).enqueue((inputs, time, state))
+case class Gunfire()
+
+case class Ship(
+  x: Int,
+  y: Int,
+  dx: Int = 0,
+  dy: Int = 0,
+  thrustingx: Int = 0,
+  thrustingy: Int = 0,
+  dying: Boolean = false,
+  firing: Boolean = false
+) {
+  val accelMultiplier = 0.015
+  val almostZero = 0.02
+  val decelRate = 0.8
+  val size = 32
+  val dMax = 0.25
 }

@@ -1,5 +1,7 @@
 package survivor
 
 object Ui {
-  def render(state: State, time: Int): Unit = ???
+  def render(state: State): Unit = {
+    println(state).toString
+  }
 }
