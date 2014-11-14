@@ -2,6 +2,6 @@ package survivor
 
 object Ui {
   def render(state: State): Unit = {
-    println(state).toString
+    // System.err.println(state).toString
   }
 }

@@ -5,12 +5,27 @@ case object Up extends Key
 case object Down extends Key
 case object Right extends Key
 case object Left extends Key
-case object Shift extends Key
+case object Space extends Key
+
+sealed trait Action
+case object Press extends Action
+case object Release extends Action
 
 sealed trait Player
 case object Me extends Player
 case object He extends Player
 
-case class Input(key: Key, pressed: Boolean, player: Player)
+sealed trait XOr
+case object ⬅ extends XOr
+case object ➡ extends XOr
+case object ⬌ extends XOr
 
-case class Event(input: Input, time: Int)
+sealed trait YOr
+case object ⬆ extends YOr
+case object ⬇ extends YOr
+case object ⬍ extends YOr
+
+case class Input(key: Key, action: Action, player: Player)
+
+case class Event(input: Input, time: Int, random: Double)
+

@@ -5,41 +5,42 @@ import org.scalajs.dom
 import dom.extensions.KeyCode
 
 object Main extends js.JSApp {
+  var nFrame = 0
+  var lastKey: (Key, Action) = (Space, Release)
+  val engine = new GameEngine(Game.initialState, Game.nextState, Ui.render)
+  
   def main(): Unit = {
-    val engine = new GameEngine(Game.initialState, Game.nextState, Ui.render)
-    
-    val now = getTime().toInt
-    dom.window.addEventListener("keydown", keyListener(true, now, engine) _, false)
-    dom.window.addEventListener("keyup", keyListener(false, now, engine) _, false)
-    
-    jsloop(engine)(0)
+    System.out.println("Survivor")
+    dom.window.addEventListener("keydown", keyListener(Press) _, false)
+    dom.window.addEventListener("keyup", keyListener(Release) _, false)
+    jsloop(0)
   }
 
-  def getTime(): Int = new js.Date().getTime().toInt
-  def miliToNFrame(t: Int) = t * 6 / 100
-
-  def keyListener(pressed: Boolean, startTime: Int, engine: GameEngine)(e0: dom.Event): Unit = {
+  def keyListener(action: Action)(e0: dom.Event): Unit = {
     val e = e0.asInstanceOf[dom.KeyboardEvent]
     val optionalKey = e.keyCode match {
-      case KeyCode.left => Some(Left)
-      case KeyCode.up => Some(Up)
-      case KeyCode.right => Some(Right)
-      case KeyCode.down => Some(Down)
-      case KeyCode.shift => Some(Shift)
-      case KeyCode.ctrl => Some(Shift)
+      case 32 => Some(Space)
+      case 37 => Some(Left)
+      case 38 => Some(Up)
+      case 39 => Some(Right)
+      case 40 => Some(Down)
       case _ => None
     }
     optionalKey.foreach { key =>
-      if(key != Shift) e.preventDefault()
-      engine.receive(Event(Input(key, pressed, Me), miliToNFrame(getTime() - startTime)))
+      e.preventDefault()
+      if(lastKey != (key, action)) {
+        lastKey = (key, action)
+        engine.receive(Event(Input(key, action, Me), nFrame, js.Math.random()))
+      }
     }
   }
   
   
-  def jsloop(engine: GameEngine)(currentTime: Double): Unit = {
-    engine.loop(miliToNFrame(currentTime.toInt))
+  def jsloop(currentTime: Double): Unit = {
+    nFrame = currentTime.toInt * 6 / 100
+    engine.loop(nFrame)
     Fps(currentTime)
-    dom.window.requestAnimationFrame(jsloop(engine) _)
+    dom.window.requestAnimationFrame(jsloop _)
   }
 }
 

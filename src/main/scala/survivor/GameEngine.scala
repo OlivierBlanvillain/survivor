@@ -8,19 +8,19 @@ class GameEngine(
       render: State => Unit) {
   
   private var events: List[Event] = List()
-  private val cache = new Cache()
+  private val cache = new scala.collection.mutable.HashMap[(List[Event], Int), State]()
   
   def loop(time: Int): Unit = {
-    val state = computeState(events, time)
-    cache.save(state, events, time)
-    render(state)
+    render(computeState(events, time))
   }
   
   
   def receive(event: Event): Unit ={
-    print(event)
-    // TODO: properly insert ooo events
-    events = event :: events
+    System.err.println(event)
+    val (newer, older) = events.span { e =>
+      e.time < event.time || (e.time == event.time && e.random < event.random)
+    }
+    events = newer ::: event :: older
   }
   
   def computeState(events: List[Event], time: Int): State = {
@@ -28,8 +28,8 @@ class GameEngine(
       initialState
     } else {
       val (nowEvents, prevEvents) = events.span(_.time == time)
-      lazy val recursively = computeState(prevEvents, time - 1)
-      cache.of(events, time) getOrElse nextState(recursively, nowEvents.map(_.input))
+      def recursively = nextState(computeState(prevEvents, time - 1), nowEvents.map(_.input))
+      cache.getOrElseUpdate((events, time), recursively)
     }
   }
 }
@@ -37,10 +37,12 @@ class GameEngine(
 class Cache {
   private val size = 100
   private var queue: Queue[(State, List[Event], Int)] = Queue()
-  
-  def of(events: List[Event], time: Int): Option[State] =
-    queue.find(e => e._2 == events && e._3 == time).map(_._1)
 
-  def save(state: State, events: List[Event], time: Int): Unit =
-    queue = (if(queue.length < size) queue else queue.dequeue._2).enqueue((state, events, time))
+  def getOrElseUpdate(key: (List[Event], Int), op: ⇒ State): State = ???
+
+  // def of(events: List[Event], time: Int): Option[State] =
+  //   queue.find(e => e._2 == events && e._3 == time).map(_._1)
+
+  // def save(state: State, events: List[Event], time: Int): Unit =
+  //   queue = (if(queue.length < size) queue else queue.dequeue._2).enqueue((state, events, time))
 }
