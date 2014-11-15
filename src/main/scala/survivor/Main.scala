@@ -2,12 +2,11 @@ package survivor
 
 import scala.scalajs.js
 import org.scalajs.dom
-import dom.extensions.KeyCode
 
 object Main extends js.JSApp {
   var currentFrame = 0
   var lastKey: (Key, Action) = (Space, Release)
-  val engine = new GameEngine(Game.initialState, Game.nextState, Ui.render)
+  val engine = new Engine(Game.initialState, Game.nextState, Ui.render)
   
   def main(): Unit = {
     System.out.println("Survivor")
@@ -30,8 +29,7 @@ object Main extends js.JSApp {
       e.preventDefault()
       if((key, action) != lastKey) {
         lastKey = (key, action)
-        engine.receive(Event(Input(key, action, Me), currentFrame, 0))
-        // engine.receive(Event(Input(key, action, Me), nFrame, js.Math.random()))
+        engine.receive(Event(Input(key, action), currentFrame, Me))
       }
     }
   }

@@ -2,7 +2,7 @@ package survivor
 
 import scala.collection.immutable.Queue
 
-class GameEngine(
+class Engine(
       initialState: State,
       nextState: (State, List[Input]) => State,
       render: State => Unit) {
@@ -11,18 +11,15 @@ class GameEngine(
   private val cache = new Cache
   
   def loop(time: Int): Unit = {
+    // In case one clock is ahead of the other one we might need this:
     // val events = eventsSoFar.dropWhile(_.time > time)
     // render(computeState(events, time))
-
     render(computeState(eventsSoFar, time))
   }
   
-  
   def receive(event: Event): Unit = {
-    System.err.println(event)
-    val (newer, older) = eventsSoFar.span { e =>
-      e.time > event.time || (e.time == event.time && e.random > event.random)
-    }
+    // TODO: time break the == cases with something.
+    val (newer, older) = eventsSoFar.span(_.time > event.time)
     eventsSoFar = newer ::: event :: older
   }
   
