@@ -5,7 +5,7 @@ import org.scalajs.dom
 import dom.extensions.KeyCode
 
 object Main extends js.JSApp {
-  var nFrame = 0
+  var currentFrame = 0
   var lastKey: (Key, Action) = (Space, Release)
   val engine = new GameEngine(Game.initialState, Game.nextState, Ui.render)
   
@@ -28,17 +28,18 @@ object Main extends js.JSApp {
     }
     optionalKey.foreach { key =>
       e.preventDefault()
-      if(lastKey != (key, action)) {
+      if((key, action) != lastKey) {
         lastKey = (key, action)
-        engine.receive(Event(Input(key, action, Me), nFrame, js.Math.random()))
+        engine.receive(Event(Input(key, action, Me), currentFrame, 0))
+        // engine.receive(Event(Input(key, action, Me), nFrame, js.Math.random()))
       }
     }
   }
   
   
   def jsloop(currentTime: Double): Unit = {
-    nFrame = currentTime.toInt * 6 / 100
-    engine.loop(nFrame)
+    currentFrame = currentTime.toInt * 6 / 100
+    engine.loop(currentFrame)
     Fps(currentTime)
     dom.window.requestAnimationFrame(jsloop _)
   }

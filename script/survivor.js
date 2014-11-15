@@ -3826,34 +3826,21 @@ function Survivor() {
       // change ship UI based on pending direction change
 
       if (xDirection > 0) {
-
         addDirection('right', 'left');
-
       } else if (xDirection < 0) {
-
         addDirection('left', 'right');
-        data.vX = Math.max(-data.vxMax, data.vX);
-
       } else {
-
         removeDirection('left');
         removeDirection('right');
-
       }
 
       if (yDirection > 0) {
-
         addDirection('down', 'up');
-
       } else if (yDirection < 0) {
-
         addDirection('up', 'down');
-
       } else {
-
         removeDirection('down');
         removeDirection('up');
-
       }
 
       // enforce velocity limits

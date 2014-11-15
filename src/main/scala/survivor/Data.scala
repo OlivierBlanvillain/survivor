@@ -16,14 +16,14 @@ case object Me extends Player
 case object He extends Player
 
 sealed trait XOr
-case object ⬅ extends XOr
-case object ➡ extends XOr
-case object ⬌ extends XOr
+case object ⇦ extends XOr
+case object ⇨ extends XOr
+case object ⬄ extends XOr
 
 sealed trait YOr
-case object ⬆ extends YOr
-case object ⬇ extends YOr
-case object ⬍ extends YOr
+case object ⇧ extends YOr
+case object ⇩ extends YOr
+case object ⇳ extends YOr
 
 case class Input(key: Key, action: Action, player: Player)
 
