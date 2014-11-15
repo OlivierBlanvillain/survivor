@@ -40,8 +40,8 @@ object Game {
     })
 
     val ySpeed = inBounds((yOrientation, old.thrusting) match {
-      case (⇧, true) => old.ySpeed + acceleration
-      case (⇩, true) => old.ySpeed - acceleration
+      case (⇧, true) => old.ySpeed - acceleration
+      case (⇩, true) => old.ySpeed + acceleration
       case _ => old.ySpeed * decelerationRate
     })
     
@@ -87,8 +87,8 @@ case class Ship(
 
 object Ship {
   val size = 32
-  val acceleration = 0.015
+  val acceleration = 0.2
   val decelerationRate = 0.8
   val almostZero = 0.01
-  val maxSpeed = 0.25
+  val maxSpeed = 4
 }
