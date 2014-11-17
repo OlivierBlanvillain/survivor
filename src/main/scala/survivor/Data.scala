@@ -28,4 +28,3 @@ case object ⇳ extends YOr
 case class Input(key: Key, action: Action)
 
 case class Event(input: Input, time: Int, player: Player)
-

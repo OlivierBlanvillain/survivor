@@ -1,6 +1,8 @@
-import ScalaJSKeys._Off with Their Heads
+import ScalaJSKeys._
 
 scalaJSSettings
+
+// workbenchSettings
 
 name := "Survivor"
 
@@ -29,3 +31,9 @@ libraryDependencies ++= Seq(
 jsDependencies ++= Seq (
   "org.webjars" % "react" % "0.11.1" / "react-with-addons.js" commonJSName "React"
 )
+
+// bootSnippet := "((typeof global === 'object' && global && global['Object'] === Object) ? global : this)['survivor']['Main']().main();"
+
+// ScalaJSKeys.inliningMode := scala.scalajs.sbtplugin.InliningMode.Off
+
+// spliceBrowsers <<= spliceBrowsers.triggeredBy(ScalaJSKeys.fastOptJS in Compile)

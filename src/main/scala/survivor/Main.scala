@@ -4,15 +4,21 @@ import scala.scalajs.js
 import org.scalajs.dom
 
 object Main extends js.JSApp {
-  var currentFrame = 0
-  var lastKey: (Key, Action) = (Space, Release)
   val engine = new Engine(Game.initialState, Game.nextState, Ui.render)
+  
+  var lastFrameTime: Double = -1.0
+  var lastFrameNumber: Int = -1
+  
+  var lastKey: (Key, Action) = (Space, Release)
+  var callId = 0
   
   def main(): Unit = {
     System.out.println("Survivor")
+   
+    rafLoop(0)
+    
     dom.window.addEventListener("keydown", keyListener(Press) _, false)
     dom.window.addEventListener("keyup", keyListener(Release) _, false)
-    jsloop(0)
   }
 
   def keyListener(action: Action)(e0: dom.Event): Unit = {
@@ -29,21 +35,30 @@ object Main extends js.JSApp {
       e.preventDefault()
       if((key, action) != lastKey) {
         lastKey = (key, action)
-        engine.receive(Event(Input(key, action), currentFrame, Me))
+        engine.receive(Event(Input(key, action), lastFrameNumber + 1, Me))
       }
     }
   }
   
-  
-  def jsloop(currentTime: Double): Unit = {
-    currentFrame = currentTime.toInt * 6 / 100
-    engine.loop(currentFrame)
-    Fps(currentTime)
-    dom.window.requestAnimationFrame(jsloop _)
+  def rafLoop(currentTime: Double): Unit = {
+    dom.window.clearInterval(callId)
+    callId = dom.window.setInterval(() => engineLoop(this.lastFrameTime + 1000), 1000)
+    engineLoop(currentTime)
+    ShowFps(currentTime)
+    dom.window.requestAnimationFrame(rafLoop _)
+  }
+
+  def engineLoop(currentTime: Double): Unit = {
+    val beforeLastFrameNumber = lastFrameNumber
+    lastFrameTime = currentTime
+    lastFrameNumber = currentTime.toInt * 60 / 1000
+    if(lastFrameNumber != beforeLastFrameNumber) {
+      engine.loop(lastFrameNumber)
+    }
   }
 }
 
-object Fps {
+object ShowFps {
   private val filterStrength: Int = 20
   private var frameTime: Double = 0.0
   private var lastLoop: Double = 0.0
