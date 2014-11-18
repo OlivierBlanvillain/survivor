@@ -7,6 +7,7 @@ import japgolly.scalajs.react._
 import vdom.ReactVDom._         
 import vdom.ReactVDom.all._     
 
+import models._
 
 object Ui {
   implicit class RichBoolean(val b: Boolean) extends AnyVal {
@@ -34,7 +35,9 @@ object Ui {
     div(cls:=clazz, top:=yPosition, left:=xPosition)()
   }
     
-  val world = component[State] { s => ship(s.ship) }
+  val world = component[State] { s =>
+    div(ship(s.myShip), ship(s.hisShip))
+  }
 
   def render(state: State): Unit = {
     // System.err.println(state.ship.toString)

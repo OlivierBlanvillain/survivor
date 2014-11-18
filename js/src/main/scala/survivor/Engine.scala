@@ -1,6 +1,6 @@
 package survivor
 
-import scala.collection.immutable.Queue
+import models._
 
 class Engine(
       initialState: State,
@@ -8,7 +8,7 @@ class Engine(
       render: State => Unit) {
   
   private var eventsSoFar: List[Event] = List()
-  private val cache = new WeakMap
+  private val cache = new WeakMap(100)
   
   def loop(time: Int): Unit = {
     // If one clock is ahead of the other we might receive inputs from the future.
@@ -17,7 +17,7 @@ class Engine(
   }
   
   def receive(event: Event): Unit = {
-    // TODO: time break the == cases with something.
+    // TODO: time break the == cases with something?
     val (newer, older) = eventsSoFar.span(_.time > event.time)
     eventsSoFar = newer ::: event :: older
   }
@@ -33,9 +33,8 @@ class Engine(
   }
 }
 
-class WeakMap {
-  val size = 100
-  var array = new Array[(Int, List[Event], State)](size)
+class WeakMap(size: Int) {
+  val array = new Array[(Int, List[Event], State)](size)
   
   def getOrElseUpdate(time: Int, events: List[Event], state: => State): State = {
     val index = time % size

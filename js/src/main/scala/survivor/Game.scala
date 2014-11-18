@@ -1,9 +1,19 @@
 package survivor
 
+import models._
+
 object Game {
   def nextState(state: State, inputs: List[Input]): State = {
-    val old = state.ship
+    val (myInputs, hisInputs) = inputs.partition(_.player == Me)
     
+    State(
+      state.time + 1,
+      myShip=nextShip(state.myShip, myInputs),
+      hisShip=nextShip(state.hisShip, hisInputs),
+      state.gunfires)
+  }
+  
+  def nextShip(old: Ship, inputs: List[Input]): Ship = {
     val pressed = inputs.foldLeft(old.pressed) { (s: Set[Key], i: Input) =>
       i.action match {
         case Press => s + i.key
@@ -48,26 +58,21 @@ object Game {
     val xPosition = old.xPosition + xSpeed
     val yPosition = old.yPosition + ySpeed
     
-    val ship = Ship(
-      xPosition,
-      yPosition,
-      xSpeed,
-      ySpeed,
+    Ship(
+      xPosition=xPosition,
+      yPosition=yPosition,
+      xSpeed=xSpeed,
+      ySpeed=ySpeed,
       xOrientation,
       yOrientation,
       pressed,
       old.dying)
-    
-    State(
-      state.time + 1,
-      ship,
-      state.gunfires)
   }
   
-  val initialState: State = State(0, Ship(32, 32), List())
+  val initialState: State = State(0, Ship(32, 32), Ship(64, 64), List())
 }
 
-case class State(time: Int, ship: Ship, gunfires: List[Gunfire])
+case class State(time: Int, myShip: Ship, hisShip: Ship, gunfires: List[Gunfire])
 
 case class Gunfire()
 

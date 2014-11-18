@@ -3,8 +3,24 @@ package survivor
 import scala.scalajs.js
 import org.scalajs.dom
 
+import akka.actor._
+
+import transport._
+import transport.akka._
+import transport.javascript._
+
+import scalajs.concurrent.JSExecutionContext.Implicits.runNow
+
+import models._
+
 object Main extends js.JSApp {
+  RegisterPicklers.registerPicklers()
+
+  implicit val system = ActorSystem("client")
+
   val engine = new Engine(Game.initialState, Game.nextState, Ui.render)
+  
+  var peer: ActorRef = _
   
   var lastFrameTime: Double = -1.0
   var lastFrameNumber: Int = -1
@@ -13,12 +29,8 @@ object Main extends js.JSApp {
   var callId = 0
   
   def main(): Unit = {
-    System.out.println("Survivor")
-   
-    rafLoop(0)
-    
-    dom.window.addEventListener("keydown", keyListener(Press) _, false)
-    dom.window.addEventListener("keyup", keyListener(Release) _, false)
+    ActorWrapper(new SockJSClient()).connectWithActor(SockJSUrl("http://localhost:9000/sockjs"))(
+      ConnectionHandlerActor.props)
   }
 
   def keyListener(action: Action)(e0: dom.Event): Unit = {
@@ -35,7 +47,9 @@ object Main extends js.JSApp {
       e.preventDefault()
       if((key, action) != lastKey) {
         lastKey = (key, action)
-        engine.receive(Event(Input(key, action), lastFrameNumber + 1, Me))
+        val event = Event(Input(key, action, Me), lastFrameNumber + 1)
+        peer ! event
+        engine.receive(event)
       }
     }
   }
@@ -56,6 +70,28 @@ object Main extends js.JSApp {
       engine.loop(lastFrameNumber)
     }
   }
+}
+
+class ConnectionHandlerActor(out: ActorRef) extends Actor {
+  def receive: Receive = {
+    case Connected(peer) =>
+      Main.peer = peer
+      Main.rafLoop(0)
+      
+      dom.window.addEventListener("keydown", Main.keyListener(Press) _, false)
+      dom.window.addEventListener("keyup", Main.keyListener(Release) _, false)
+      
+      // context.watch(peer)
+      context.become(connected(peer))
+  }
+
+  def connected(peer: ActorRef): Receive = {
+    case e @ Event(_, _) => Main.engine receive e.copy(input=e.input.copy(player=Him))
+    // case Terminated(ref) if ref == peer => context.stop(self)
+  }
+}
+object ConnectionHandlerActor {
+  def props(out: ActorRef) = Props(new ConnectionHandlerActor(out))
 }
 
 object ShowFps {

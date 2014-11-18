@@ -1,4 +1,9 @@
-package survivor
+package models
+
+import akka.actor.ActorRef
+
+case class Msg(text: String)
+case class Connected(peer: ActorRef)
 
 sealed trait Key
 case object Up extends Key
@@ -13,7 +18,7 @@ case object Release extends Action
 
 sealed trait Player
 case object Me extends Player
-case object He extends Player
+case object Him extends Player
 
 sealed trait XOr
 case object ⇦ extends XOr
@@ -25,6 +30,6 @@ case object ⇧ extends YOr
 case object ⇩ extends YOr
 case object ⇳ extends YOr
 
-case class Input(key: Key, action: Action)
+case class Input(key: Key, action: Action, player: Player)
 
-case class Event(input: Input, time: Int, player: Player)
+case class Event(input: Input, time: Int)

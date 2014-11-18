@@ -1,0 +1,2 @@
+->      /sockjs                     controllers.Application.sockJS
+GET     /assets/*file               controllers.Assets.at(path="/public", file)
