@@ -1,7 +1,5 @@
 package survivor
 
-import models._
-
 object Game {
   def nextState(state: State, inputs: List[Input]): State = {
     val (myInputs, hisInputs) = inputs.partition(_.player == Me)

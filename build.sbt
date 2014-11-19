@@ -22,21 +22,19 @@ val commonSettings = Seq(
 
 // spliceBrowsers <<= spliceBrowsers.triggeredBy(ScalaJSKeys.fastOptJS in Compile)
 
-lazy val play = project.in(file("play"))
-  .enablePlugins(PlayScala)
+lazy val server = project.in(file("server"))
   .settings((commonSettings): _*)
   .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / "../shared")
   .settings(libraryDependencies ++= Seq(
-    "org.scalajs" %% "transportplay" % "0.1-SNAPSHOT",
-    "org.scalajs" %% "transportakkajvm" % "0.1-SNAPSHOT"))
+    "org.scalajs" %% "transportnetty" % "0.1-SNAPSHOT"))
 
-lazy val js = project.in(file("js"))
+lazy val jsClient = project.in(file("js-client"))
   .settings((commonSettings ++ scalaJSSettings): _*)
-  .settings(unmanagedSourceDirectories in Compile += (baseDirectory in play).value / "../shared")
+  .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / "../shared")
   .settings(libraryDependencies ++= Seq(
     "org.scalajs" %%% "transportjavascript" % "0.1-SNAPSHOT",
-    "org.scalajs" %%% "transportakkajs" % "0.1-SNAPSHOT",
     "org.scala-lang.modules.scalajs" %%% "scalajs-dom" % "0.6",
+    "com.lihaoyi" %%% "upickle" % "0.2.5",
     "com.github.japgolly.scalajs-react" %%% "core" % "0.5.1"))
   .settings(jsDependencies ++= Seq (
     "org.webjars" % "sockjs-client" % "0.3.4" / "sockjs.min.js" commonJSName "SockJS",

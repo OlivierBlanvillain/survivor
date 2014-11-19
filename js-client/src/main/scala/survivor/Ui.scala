@@ -7,8 +7,6 @@ import japgolly.scalajs.react._
 import vdom.ReactVDom._         
 import vdom.ReactVDom.all._     
 
-import models._
-
 object Ui {
   implicit class RichBoolean(val b: Boolean) extends AnyVal {
     final def option[A](a: => A): Option[A] = if (b) Some(a) else None

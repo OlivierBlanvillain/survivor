@@ -1,9 +1,4 @@
-package models
-
-import akka.actor.ActorRef
-
-case class Msg(text: String)
-case class Connected(peer: ActorRef)
+package survivor
 
 sealed trait Key
 case object Up extends Key

@@ -1,7 +1,5 @@
 package survivor
 
-import models._
-
 class Engine(
       initialState: State,
       nextState: (State, List[Input]) => State,
