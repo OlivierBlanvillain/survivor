@@ -17,8 +17,10 @@ object Server extends App {
     promise.success { inboundConnection =>
       pendingConnection = pendingConnection match {
         case None =>
+          println("pending...")
           Some(inboundConnection)
         case Some(connection) =>
+          println("Connected!")
           connection.handlerPromise.success(inboundConnection.write(_))
           inboundConnection.handlerPromise.success(connection.write(_))
           None
