@@ -37,7 +37,7 @@ lazy val jsClient = project.in(file("js-client"))
     "com.lihaoyi" %%% "upickle" % "0.2.5",
     "com.github.japgolly.scalajs-react" %%% "core" % "0.5.1"))
   .settings(jsDependencies ++= Seq (
-    "org.webjars" % "sockjs-client" % "0.3.4" / "sockjs.min.js" commonJSName "SockJS",
+    "org.webjars" % "sockjs-client" % "0.3.4" / "sockjs.min.js",
     "org.webjars" % "react" % "0.11.1" / "react-with-addons.js" commonJSName "React"))
   .settings(persistLauncher := true)
   .settings(skip in packageJSDependencies := false)

@@ -10,16 +10,21 @@ object Server extends App {
   var pendingConnection: Option[ConnectionHandle] = None
   
   val netty = new WebSocketServer(8080, "/ws")
-  netty.listen().foreach(_.success { inboundConnection =>
-    pendingConnection = pendingConnection match {
-      case None =>
-        Some(inboundConnection)
-      case Some(connection) =>
-        connection.handlerPromise.success(inboundConnection.write(_))
-        inboundConnection.handlerPromise.success(connection.write(_))
-        None
+  netty.listen().foreach { promise =>
+    println()
+    println("Press enter to interrupt")
+    
+    promise.success { inboundConnection =>
+      pendingConnection = pendingConnection match {
+        case None =>
+          Some(inboundConnection)
+        case Some(connection) =>
+          connection.handlerPromise.success(inboundConnection.write(_))
+          inboundConnection.handlerPromise.success(connection.write(_))
+          None
+      }
     }
-  })
+  }
   
   System.in.read()
   

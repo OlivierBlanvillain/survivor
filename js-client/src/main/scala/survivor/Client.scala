@@ -10,11 +10,9 @@ import transport.javascript._
 
 import scalajs.concurrent.JSExecutionContext.Implicits.runNow
 
-object Main extends js.JSApp {
-  val url = WebSocketUrl("ws://localhost:8080/ws")
+object Client extends js.JSApp {
   val afkFps = 1
   val fps = 60
-  val engine = new Engine(Game.initialState, Game.nextState, Ui.render)
   
   var lastFrameTime: Double = -1.0
   def lastFrameNumber = lastFrameTime.toInt * fps / 1000
@@ -23,27 +21,38 @@ object Main extends js.JSApp {
   var callId = 0
   
   def main(): Unit = {
+    val url = WebSocketUrl("ws://localhost:8080/ws")
+    val engine = new Engine(Game.initialState, Game.nextState, Ui.render)
+
     if(dom.document.URL contains "solo") {
-      startGame(_ => ())
+      startGame(engine.receive(_), engine.loop _)
     } else {
-      
-      new WebSocketClient().connect(url).foreach { connection =>
+      new WebSocketClient().connect(url) foreach { connection =>
+        def fireEvent(event: Event): Unit = {
+          connection.write(upickle.write(event))
+          engine.receive(event)
+        }
+        
         connection.handlerPromise.success { pickle =>
           val event = upickle.read[Event](pickle)
           engine.receive(event.copy(input=event.input.copy(player=Him)))
         }
-        startGame(event => connection.write(upickle.write(event)))
+        
+        fireEvent(Event(Input(key, action, Me), lastFrameNumber + 1))
+        
+        startGame(fireEvent _, engine.loop _)
+
       }
     }
   }
   
-  def startGame(sentToPeer: Event => Unit): Unit = {
-    rafLoop(0)
-    dom.window.addEventListener("keydown", keyListener(sentToPeer, Press) _, false)
-    dom.window.addEventListener("keyup", keyListener(sentToPeer, Release) _, false)
+  def startGame(fireEvent: Event => Unit, engineLoop: Int => Unit): Unit = {
+    rafLoop(engineLoop)(0)
+    dom.window.addEventListener("keydown", keyListener(fireEvent, Press) _, false)
+    dom.window.addEventListener("keyup", keyListener(fireEvent, Release) _, false)
   }
   
-  def keyListener(sentToPeer: Event => Unit, action: Action)(e0: dom.Event): Unit = {
+  def keyListener(fireEvent: Event => Unit, action: Action)(e0: dom.Event): Unit = {
     val e = e0.asInstanceOf[dom.KeyboardEvent]
     val optionalKey = e.keyCode match {
       case 32 => Some(Space)
@@ -58,24 +67,23 @@ object Main extends js.JSApp {
       if((key, action) != lastKey) {
         lastKey = (key, action)
         val event = Event(Input(key, action, Me), lastFrameNumber + 1)
-        sentToPeer(event)
-        engine.receive(event)
+        fireEvent(event)
       }
     }
   }
   
-  def rafLoop(currentTime: Double): Unit = {
+  def rafLoop(engineLoop: Int => Unit)(currentTime: Double): Unit = {
     dom.window.clearInterval(callId)
     callId = dom.window.setInterval({ () =>
       lastFrameTime += 1000 / afkFps
-      engine.loop(lastFrameNumber)
+      engineLoop(lastFrameNumber)
     }, 1000 / afkFps)
     
     lastFrameTime = currentTime
-    engine.loop(lastFrameNumber)
+    engineLoop(lastFrameNumber)
     
     ShowFps(currentTime)
-    dom.window.requestAnimationFrame(rafLoop _)
+    dom.window.requestAnimationFrame(rafLoop(engineLoop) _)
   }
 
 }
