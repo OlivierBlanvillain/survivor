@@ -21,8 +21,14 @@ object Server extends App {
           Some(inboundConnection)
         case Some(connection) =>
           println("Connected!")
-          connection.handlerPromise.success(inboundConnection.write(_))
-          inboundConnection.handlerPromise.success(connection.write(_))
+          connection.handlerPromise.success { m =>
+            println(s"NEW -> OLD: $m")
+            inboundConnection.write(m)
+          }
+          inboundConnection.handlerPromise.success { m =>
+            println(s"OLD -> NEW: $m")
+            connection.write(m)
+          }
           None
       }
     }

@@ -2,7 +2,7 @@ package survivor
 
 object Game {
   def nextState(state: State, inputs: List[Input]): State = {
-    val (myInputs, hisInputs) = inputs.partition(_.player == Me)
+    val (myInputs, hisInputs) = inputs.partition(_.player == P1)
     
     State(
       state.time + 1,
@@ -35,7 +35,7 @@ object Game {
     
     import Ship._
     
-    def inBounds(d: Double) =
+    def inBounds(d: Double): Double =
       if(d > maxSpeed) maxSpeed
       else if(d < -maxSpeed) -maxSpeed
       else if(d < almostZero && d > -almostZero) 0
@@ -93,5 +93,5 @@ object Ship {
   val acceleration = 0.2
   val decelerationRate = 0.8
   val almostZero = 0.01
-  val maxSpeed = 4
+  val maxSpeed = 4.0
 }

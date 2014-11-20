@@ -12,8 +12,8 @@ case object Press extends Action
 case object Release extends Action
 
 sealed trait Player
-case object Me extends Player
-case object Him extends Player
+case object P1 extends Player
+case object P2 extends Player
 
 sealed trait XOr
 case object ⇦ extends XOr

@@ -1,5 +1,7 @@
 package survivor
 
+import System.currentTimeMillis
+
 import scala.scalajs.js
 import org.scalajs.dom
 
@@ -14,45 +16,42 @@ object Client extends js.JSApp {
   val afkFps = 1
   val fps = 60
 
-  var lastFrameTime: Double = -1.0
+  var lastFrameTime: Long = -1
   def lastFrameNumber = lastFrameTime.toInt * fps / 1000
   var lastKey: (Key, Action) = (Space, Release)
   var callId = 0
   var first = true
-  var startTime: Double = _
+  var startTime: Long = _
   
   def main(): Unit = {
     val url = WebSocketUrl("ws://localhost:8080/ws")
     val engine = new Engine(Game.initialState, Game.nextState, Ui.render)
 
     if(dom.document.URL contains "solo") {
-      startGame(engine.receive(_), engine.loop _)
+      startGame(e => engine.receive(e(P1)), engine.loop _)
     } else {
       new WebSocketClient().connect(url) foreach { connection =>
-        val selfStartTime = Date.now()
+        val selfStartTime = currentTimeMillis()
         connection.write(selfStartTime.toString)
 
         connection.handlerPromise.success { pickle =>
           if(first) {
             first = false
-            val remoteStartTime = pickle.toDouble
+            val remoteStartTime = pickle.toLong
             startTime = Math.max(selfStartTime, remoteStartTime) + 1000
-            println(s"remoteStartTime=$remoteStartTime")
-            println(s"startTime=$startTime")
             
-            def fireEvent(event: Event): Unit = {
+            def fireEvent(e: Player => Event): Unit = {
+              val event = if(selfStartTime < remoteStartTime) e(P1) else e(P2)
               connection.write(upickle.write(event))
               engine.receive(event)
             }
             
             dom.window.setTimeout({ () =>
-              println("now=" + Date.now())
-              startGame(fireEvent _, engine.loop _)
-            }, startTime - Date.now())
+              startGame(fireEvent, engine.loop _)
+            }, startTime - currentTimeMillis())
 
           } else {
-            val event = upickle.read[Event](pickle)
-            engine.receive(event.copy(input=event.input.copy(player=Him)))
+            engine.receive(upickle.read[Event](pickle))
           }
         }
         
@@ -60,13 +59,13 @@ object Client extends js.JSApp {
     }
   }
   
-  def startGame(fireEvent: Event => Unit, engineLoop: Int => Unit): Unit = {
+  def startGame(fireEvent: (Player => Event) => Unit, engineLoop: Int => Unit): Unit = {
     rafLoop(engineLoop)(0)
     dom.window.addEventListener("keydown", keyListener(fireEvent, Press) _, false)
     dom.window.addEventListener("keyup", keyListener(fireEvent, Release) _, false)
   }
   
-  def keyListener(fireEvent: Event => Unit, action: Action)(e0: dom.Event): Unit = {
+  def keyListener(fireEvent: (Player => Event) => Unit, action: Action)(e0: dom.Event): Unit = {
     val e = e0.asInstanceOf[dom.KeyboardEvent]
     val optionalKey = e.keyCode match {
       case 32 => Some(Space)
@@ -80,14 +79,13 @@ object Client extends js.JSApp {
       e.preventDefault()
       if((key, action) != lastKey) {
         lastKey = (key, action)
-        val event = Event(Input(key, action, Me), lastFrameNumber + 1)
-        fireEvent(event)
+        fireEvent(p => Event(Input(key, action, p), lastFrameNumber + 1))
       }
     }
   }
   
   def rafLoop(engineLoop: Int => Unit)(t0: Double): Unit = {
-    val currentTime = Date.now() - startTime
+    val currentTime = currentTimeMillis() - startTime
     dom.window.clearInterval(callId)
     callId = dom.window.setInterval({ () =>
       lastFrameTime += 1000 / afkFps
@@ -97,12 +95,8 @@ object Client extends js.JSApp {
     lastFrameTime = currentTime
     engineLoop(lastFrameNumber)
     
-    ShowFps(currentTime)
+    ShowFps(t0)
     dom.window.requestAnimationFrame(rafLoop(engineLoop) _)
   }
 
-}
-
-object Date {
-  def now(): Double = js.Date.now()
 }

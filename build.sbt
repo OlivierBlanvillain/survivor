@@ -5,12 +5,14 @@ val commonSettings = Seq(
   version := "0.1-SNAPSHOT",
   scalaVersion := "2.11.2",
   scalacOptions ++= Seq(
-    "-language:reflectiveCalls",
-    "-deprecation",
+    "-deprecation",           
+    "-encoding", "UTF-8",
+    "-feature",                
     "-unchecked",
-    "-feature",
-    "-Xlint",
-    "-encoding", "utf8"
+    "-Yno-adapted-args",       
+    "-Ywarn-numeric-widen",   
+    "-Xfuture",
+    "-Xlint"
   )
 )
 

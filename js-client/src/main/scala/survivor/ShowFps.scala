@@ -4,8 +4,8 @@ import org.scalajs.dom
 
 object ShowFps {
   private val filterStrength: Int = 20
-  private var frameTime: Double = 0.0
-  private var lastLoop: Double = 0.0
+  private var frameTime: Double = 0
+  private var lastLoop: Double = 0
   
   def apply(currentTime: Double): Unit = {
     var thisFrameTime = currentTime - lastLoop
