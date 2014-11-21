@@ -35,6 +35,7 @@ class WeakMap(size: Int) {
   val array = new Array[(Int, List[Event], State)](size)
   
   def getOrElseUpdate(time: Int, events: List[Event], state: => State): State = {
+    if(time < 0) throw new IndexOutOfBoundsException(time.toString)
     val index = time % size
     val value = array(index)
     if(value != null && value._1 == time && value._2 == events) {
