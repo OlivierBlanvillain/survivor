@@ -21,28 +21,27 @@ object ReactUi {
     .shouldComponentUpdate((scope, props, _) => scope.props ne props)
     .build
   
+  val ship = component[Ship] { s =>
+    import s._
+    
+    val clazz = List(
+      Some("ship"),
+      thrusting option "thrusting",
+      xOrientation == ⇦ option "thrust-left",
+      xOrientation == ⇨ option "thrust-right",
+      yOrientation == ⇧ option "thrust-up",
+      yOrientation == ⇩ option "thrust-down",
+      dying option "hidden"
+    ) flatMap (_.toList) mkString " "
+
+    div(cls:=clazz, top:=yPosition, left:=xPosition)()
+  }
+  
+  val world = component[State] { s =>
+    div(ship(s.myShip), ship(s.hisShip))
+  }
 
   def render(state: State): Unit = {
-    val ship = component[Ship] { s =>
-      import s._
-      
-      val clazz = List(
-        Some("ship"),
-        thrusting option "thrusting",
-        xOrientation == ⇦ option "thrust-left",
-        xOrientation == ⇨ option "thrust-right",
-        yOrientation == ⇧ option "thrust-up",
-        yOrientation == ⇩ option "thrust-down",
-        dying option "hidden"
-      ) flatMap (_.toList) mkString " "
-
-      div(cls:=clazz, top:=yPosition, left:=xPosition)()
-    }
-      
-    val world = component[State] { s =>
-      div(ship(s.myShip), ship(s.hisShip))
-    }
-    
     world(state) render dom.document.getElementById("world")
   }
   

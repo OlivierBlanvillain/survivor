@@ -47,8 +47,8 @@ lazy val reactUi = project.in(file("react-ui"))
   .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / "../shared")
   .settings(skip in packageJSDependencies := false)
   .settings(libraryDependencies ++= Seq(
-    "org.scalajs" %%% "transportjavascript" % "0.1-SNAPSHOT",
     "org.scala-lang.modules.scalajs" %%% "scalajs-dom" % "0.6",
+    "org.scalajs" %%% "transportjavascript" % "0.1-SNAPSHOT",
     "com.github.japgolly.scalajs-react" %%% "core" % "0.5.1",
     "com.lihaoyi" %%% "upickle" % "0.2.5"))
   .settings(jsDependencies +=
