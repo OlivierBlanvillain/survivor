@@ -20,25 +20,32 @@ object ReactUi {
     .render(r)
     .shouldComponentUpdate((scope, props, _) => scope.props ne props)
     .build
-  
+    
+
   val ship = component[Ship] { s =>
     import s._
     
     val clazz = List(
       Some("ship"),
       thrusting option "thrusting",
-      xOrientation == ⇦ option "thrust-left",
-      xOrientation == ⇨ option "thrust-right",
-      yOrientation == ⇧ option "thrust-up",
-      yOrientation == ⇩ option "thrust-down",
+      xOr == ⇦ option "thrust-left",
+      xOr == ⇨ option "thrust-right",
+      yOr == ⇧ option "thrust-up",
+      yOr == ⇩ option "thrust-down",
       dying option "hidden"
     ) flatMap (_.toList) mkString " "
 
-    div(cls:=clazz, top:=yPosition, left:=xPosition)()
+    div(cls:=clazz, top:=yPos, left:=xPos)()
+  }
+  
+  val gunfires = component[(List[Gunfire], Int)] { case (gfs, now) =>
+    div(gfs.map { gunfire =>
+      div(cls:="ship-gunfire", top:=gunfire.yPos(now), left:=gunfire.xPos(now))
+    })
   }
   
   val world = component[State] { s =>
-    div(ship(s.myShip), ship(s.hisShip))
+    div(ship(s.myShip), ship(s.hisShip), gunfires((s.gunfires, s.time)))
   }
 
   def render(state: State): Unit = {

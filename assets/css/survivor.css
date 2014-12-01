@@ -374,6 +374,8 @@ body.show-help #world-container {
  width: 26px;
  height: 26px;
  padding: 3px;
+ margin-top: -16px;
+ margin-left: -16px;
  border-radius: 32px;
  -moz-transform: rotate(0deg), scale3d(1,1,1);
  -moz-transition: box-shadow 0.2s ease-in-out;
@@ -483,6 +485,8 @@ body.show-help #world-container {
  position: absolute;
  width: 6px;
  height: 6px;
+ margin-top: -3px;
+ margin-left: -3px;
  background: #fff;
  border-radius: 100%;
 }
@@ -1030,4 +1034,12 @@ a.cta:focus {
  text-indent: -99em;
  vertical-align: middle;
  text-align: center;
+}
+
+.debugDot {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNg+M/wHwAEAQH/rrVV9QAAAABJRU5ErkJggg==) no-repeat 50% 50%;
+  position: absolute;
+  z-index: 100;
+  width: 1px;
+  height: 1px;
 }

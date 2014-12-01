@@ -3,15 +3,29 @@ package survivor
 object Game {
   def nextState(state: State, inputs: List[Input]): State = {
     val (myInputs, hisInputs) = inputs.partition(_.player == P1)
+    val t = state.time
+    
+    val gunfires: List[Gunfire] = fires(state.myShip, t) ::: fires(state.hisShip, t) :::
+      state.gunfires.filterNot { gf =>
+        gf.xPos(t) < 0 || gf.xPos(t) > World.width || gf.yPos(t) < 0 || gf.yPos(t) > World.height
+      }
     
     State(
       state.time + 1,
-      myShip=nextShip(state.myShip, myInputs),
-      hisShip=nextShip(state.hisShip, hisInputs),
-      state.gunfires)
+      myShip=nextShip(state.myShip, myInputs, t),
+      hisShip=nextShip(state.hisShip, hisInputs, t),
+      gunfires)
   }
   
-  def nextShip(old: Ship, inputs: List[Input]): Ship = {
+  def fires(ship: Ship, now: Int): List[Gunfire] = {
+    import ship._, Ship._
+    if(firing && (now - firingSince) % firingRate == 0) {
+      val gunfire = Gunfire(now, xInit=xPos, yInit=yPos, xOr, yOr)
+      List(gunfire, gunfire.copy(xOr=xOr.opposite, yOr=yOr.opposite))
+    } else Nil
+  }
+  
+  def nextShip(old: Ship, inputs: List[Input], now: Int): Ship = {
     val pressed = inputs.foldLeft(old.pressed) { (s: Set[Key], i: Input) =>
       i.action match {
         case Press => s + i.key
@@ -19,79 +33,58 @@ object Game {
       }
     }
     
-    val xOrientation = (pressed(Left), pressed(Right)) match {
-      case (true, false) => ⇦
-      case (false, true) => ⇨
-      case _ if(pressed(Up) || pressed(Down)) => ⬄
-      case _ => old.xOrientation
-    }
+    val orientation = (
+      (pressed(Left), pressed(Right)) match {
+        case (true, false) => ⇦
+        case (false, true) => ⇨
+        case _ => ⬄
+      },
+      (pressed(Up), pressed(Down)) match {
+        case (true, false) => ⇧
+        case (false, true) => ⇩
+        case _ => ⇳
+      }
+    )
+    val (xOr, yOr) = if((⬄, ⇳) == orientation) (old.xOr, old.yOr) else orientation
 
-    val yOrientation = (pressed(Up), pressed(Down)) match {
-      case (true, false) => ⇧
-      case (false, true) => ⇩
-      case _ if(pressed(Left) || pressed(Right)) => ⇳
-      case _ => old.yOrientation
-    }
-    
     import Ship._
     
-    def inBounds(d: Double): Double =
+    def inBounds(d: Double): Double = {
       if(d > maxSpeed) maxSpeed
       else if(d < -maxSpeed) -maxSpeed
       else if(d < almostZero && d > -almostZero) 0
       else d
+    }
     
-    val xSpeed = inBounds((xOrientation, old.thrusting) match {
+    val xSpeed = inBounds((xOr, old.thrusting) match {
       case (⇦, true) => old.xSpeed - acceleration
       case (⇨, true) => old.xSpeed + acceleration
       case _ => old.xSpeed * decelerationRate
     })
 
-    val ySpeed = inBounds((yOrientation, old.thrusting) match {
+    val ySpeed = inBounds((yOr, old.thrusting) match {
       case (⇧, true) => old.ySpeed - acceleration
       case (⇩, true) => old.ySpeed + acceleration
       case _ => old.ySpeed * decelerationRate
     })
     
-    val xPosition = old.xPosition + xSpeed
-    val yPosition = old.yPosition + ySpeed
+    val xPos = old.xPos + xSpeed
+    val yPos = old.yPos + ySpeed
     
     Ship(
-      xPosition=xPosition,
-      yPosition=yPosition,
+      xPos=xPos,
+      yPos=yPos,
       xSpeed=xSpeed,
       ySpeed=ySpeed,
-      xOrientation,
-      yOrientation,
+      xOr,
+      yOr,
       pressed,
-      old.dying)
+      old.dying,
+      dyingSince=old.dyingSince,
+      firingSince=
+        if(inputs.exists(k => k.key == Space && k.action == Press)) now else old.firingSince
+    )
   }
   
   val initialState: State = State(0, Ship(32, 32), Ship(64, 64), List())
-}
-
-case class State(time: Int, myShip: Ship, hisShip: Ship, gunfires: List[Gunfire])
-
-case class Gunfire()
-
-case class Ship(
-  xPosition: Double,
-  yPosition : Double,
-  xSpeed: Double = 0,
-  ySpeed: Double = 0,
-  xOrientation: XOr = ⬄,
-  yOrientation: YOr = ⇧,
-  pressed: Set[Key] = Set(),
-  dying: Boolean = false
-) {
-  def thrusting: Boolean = !pressed.isEmpty
-  def firing: Boolean = pressed contains Space
-}
-
-object Ship {
-  val size = 32
-  val acceleration = 0.2
-  val decelerationRate = 0.8
-  val almostZero = 0.01
-  val maxSpeed = 4.0
 }
