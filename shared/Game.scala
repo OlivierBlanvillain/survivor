@@ -22,19 +22,15 @@ object Game {
   
   def fires(ship: Ship, now: Int): List[Gunfire] = {
     import ship._
+    
     if(firing && (now - firingSince) % firingRate == 1) {
       val gunfire = Gunfire(now, xInit=x, yInit=y, xOr, yOr)
       List(gunfire, gunfire.copy(xOr=xOr.opposite, yOr=yOr.opposite))
     } else Nil
   }
   
-  def nextShip(s: Ship, inputs: List[Input], now: Int): Ship = {
-    val pressed = inputs.foldLeft(s.pressed) { (s: Set[Key], i: Input) =>
-      i.action match {
-        case Press => s + i.key
-        case Release => s - i.key
-      }
-    }
+  def nextShip(oldShip: Ship, inputs: List[Input], now: Int): Ship = {
+    import oldShip._
     
     val orientation = (
       (pressed(Left), pressed(Right)) match {
@@ -48,42 +44,43 @@ object Game {
         case _ => ⇳
       }
     )
-    val (xOr, yOr) = if((⬄, ⇳) == orientation) (s.xOr, s.yOr) else orientation
 
     def inBounds(d: Double): Double = {
-      if(d > s.maxSpeed) s.maxSpeed
-      else if(d < -s.maxSpeed) -s.maxSpeed
-      else if(d < s.almostZero && d > -s.almostZero) 0
+      if(d > maxSpeed) maxSpeed
+      else if(d < -maxSpeed) -maxSpeed
+      else if(d < almostZero && d > -almostZero) 0
       else d
     }
     
-    val xSpeed = inBounds((s.xOr, s.thrusting) match {
-      case (⇦, true) => s.xSpeed - s.acceleration
-      case (⇨, true) => s.xSpeed + s.acceleration
-      case _ => s.xSpeed * s.decelerationRate
-    })
-
-    val ySpeed = inBounds((s.yOr, s.thrusting) match {
-      case (⇧, true) => s.ySpeed - s.acceleration
-      case (⇩, true) => s.ySpeed + s.acceleration
-      case _ => s.ySpeed * s.decelerationRate
-    })
-    
-    val x = s.x + s.xSpeed
-    val y = s.y + s.ySpeed
-    
     Ship(
-      x=x,
-      y=y,
-      xSpeed=xSpeed,
-      ySpeed=ySpeed,
-      xOr,
-      yOr,
-      pressed,
-      s.dying,
-      dyingSince=s.dyingSince,
-      firingSince=
-        if(inputs.exists(k => k.key == Space && k.action == Press)) now else s.firingSince
+      x=x + xSpeed,
+      y=y + ySpeed,
+      
+      xSpeed=inBounds((xOr, thrusting) match {
+        case (⇦, true) => xSpeed - acceleration
+        case (⇨, true) => xSpeed + acceleration
+        case _ => xSpeed * decelerationRate
+      }),
+      
+      ySpeed=inBounds((yOr, thrusting) match {
+        case (⇧, true) => ySpeed - acceleration
+        case (⇩, true) => ySpeed + acceleration
+        case _ => ySpeed * decelerationRate
+      }),
+      
+      xOr=if((⬄, ⇳) == orientation) xOr else orientation._1,
+      yOr=if((⬄, ⇳) == orientation) yOr else orientation._2,
+      
+      pressed=inputs.foldLeft(pressed) { (s: Set[Key], i: Input) =>
+        i.action match {
+          case Press => s + i.key
+          case Release => s - i.key
+        }
+      },
+      
+      dying=dying,
+      dyingSince=dyingSince,
+      firingSince=if(inputs.exists(k => k.key == Space && k.action == Press)) now else firingSince
     )
   }
   

@@ -56,11 +56,11 @@ trait Shape {
         val xCircleD = math.abs(c.x(t) - r.x(t))
         val yCircleD = math.abs(c.y(t) - r.y(t))
         lazy val cornerD = sq(xCircleD - r.halfWeight(t)) + sq(yCircleD - r.halfHeight(t))
-        if (xCircleD > (r.halfWeight(t) + c.radius)) return false
-        if (yCircleD > (r.halfHeight(t) + c.radius)) return false
-        if (xCircleD <= (r.halfWeight(t))) return true
-        if (yCircleD <= (r.halfHeight(t))) return true
-        return (cornerD <=  sq(c.radius))
+        if(xCircleD > (r.halfWeight(t) + c.radius)) return false
+        if(yCircleD > (r.halfHeight(t) + c.radius)) return false
+        if(xCircleD <= (r.halfWeight(t))) return true
+        if(yCircleD <= (r.halfHeight(t))) return true
+        return cornerD <= sq(c.radius)
 
       case (r: Rectangle, c: Circle) =>
         shape.intersects(this, t)
@@ -70,11 +70,13 @@ trait Shape {
 }
 
 trait Circle extends Shape {
-  def cells(t: Int): List[Point] = List(
-    Point(1,1), Point(1,-1), Point(-1,1), Point(-1,-1)
-  ).map { p =>
-    Point((radius + p.x * x(t)).toInt / World.unitPx, (radius + p.y * y(t)).toInt / World.unitPx)
-  }.distinct
+  def cells(t: Int): List[Point] = {
+    List(
+      Point(1,1), Point(1,-1), Point(-1,1), Point(-1,-1)
+    ).map { p =>
+      Point((x(t) + p.x * radius).toInt / World.unitPx, (y(t) + p.y * radius).toInt / World.unitPx)
+    }.distinct
+  }
   
   def radius: Double
 }

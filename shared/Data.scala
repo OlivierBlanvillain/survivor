@@ -34,21 +34,25 @@ case class State(time: Int, myShip: Ship, hisShip: Ship, gunfires: List[Gunfire]
 case class Gunfire(createdAt: Int, xInit: Double, yInit: Double, xOr: XOr, yOr: YOr)
     extends Circle {
   
-  def x(time: Int): Double = xOr match {
-    case ⇦ => xInit - xSpeed * (time - createdAt)
-    case ⇨ => xInit + xSpeed * (time - createdAt)
-    case ⬄ => xInit
+  val xSpeed = 8.0
+  val ySpeed = 8.0
+  
+  val signedXSpeed = xOr match {
+    case ⇦ => xSpeed
+    case ⇨ => -xSpeed
+    case ⬄ => 0
   }
 
-  def y(time: Int): Double = yOr match {
-    case ⇩ => yInit + ySpeed * (time - createdAt)
-    case ⇧ => yInit - ySpeed * (time - createdAt)
-    case ⇳ => yInit
+  val signedYSpeed = yOr match {
+    case ⇩ => -ySpeed
+    case ⇧ => ySpeed
+    case ⇳ => 0
   }
   
-  def radius = 6.0
-  def xSpeed = 8.0
-  def ySpeed = 8.0
+  val initTime = createdAt - 2
+  def x(time: Int): Double = xInit + signedXSpeed * (time - initTime)
+  def y(time: Int): Double = yInit + signedYSpeed * (time - initTime)
+  val radius = 3.0
 }
 
 case class Ship(
@@ -65,14 +69,14 @@ case class Ship(
 ) extends Circle {
   def thrusting: Boolean = pressed.filterNot(_ == Space).nonEmpty
   def firing: Boolean = pressed contains Space
-  def radius = 12.0
-  def acceleration = 0.2
-  def decelerationRate = 0.8
-  def almostZero = 0.01
-  def maxSpeed = 4.0
-  def firingRate = 10
   def x(time: Int): Double = x
   def y(time: Int): Double = y
+  val radius = 14.0
+  val acceleration = 0.2
+  val decelerationRate = 0.8
+  val almostZero = 0.01
+  val maxSpeed = 4.0
+  val firingRate = 10
 }
 
 object World {
