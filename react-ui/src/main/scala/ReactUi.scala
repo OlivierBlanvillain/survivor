@@ -35,12 +35,12 @@ object ReactUi {
       dying option "hidden"
     ) flatMap (_.toList) mkString " "
 
-    div(cls:=clazz, top:=yPos, left:=xPos)()
+    div(cls:=clazz, top:=y, left:=x)()
   }
   
   val gunfires = component[(List[Gunfire], Int)] { case (gfs, now) =>
     div(gfs.map { gunfire =>
-      div(cls:="ship-gunfire", top:=gunfire.yPos(now), left:=gunfire.xPos(now))
+      div(cls:="ship-gunfire", top:=gunfire.y(now), left:=gunfire.x(now))
     })
   }
   

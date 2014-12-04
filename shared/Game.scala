@@ -5,10 +5,13 @@ object Game {
     val (myInputs, hisInputs) = inputs.partition(_.player == P1)
     val t = state.time
     
+    val inCollision: List[Shape] = Collision.of(state.myShip :: state.hisShip :: state.gunfires, t)
+    
+    inCollision foreach println // TODO debug
+    if(inCollision.nonEmpty) println("---------------------")
+    
     val gunfires: List[Gunfire] = fires(state.myShip, t) ::: fires(state.hisShip, t) :::
-      state.gunfires.filterNot { gf =>
-        gf.xPos(t) < 0 || gf.xPos(t) > World.width || gf.yPos(t) < 0 || gf.yPos(t) > World.height
-      }
+      state.gunfires.filterNot { gf => World.contains(x=gf.x(t), y=gf.y(t)) }
     
     State(
       state.time + 1,
@@ -18,15 +21,15 @@ object Game {
   }
   
   def fires(ship: Ship, now: Int): List[Gunfire] = {
-    import ship._, Ship._
-    if(firing && (now - firingSince) % firingRate == 0) {
-      val gunfire = Gunfire(now, xInit=xPos, yInit=yPos, xOr, yOr)
+    import ship._
+    if(firing && (now - firingSince) % firingRate == 1) {
+      val gunfire = Gunfire(now, xInit=x, yInit=y, xOr, yOr)
       List(gunfire, gunfire.copy(xOr=xOr.opposite, yOr=yOr.opposite))
     } else Nil
   }
   
-  def nextShip(old: Ship, inputs: List[Input], now: Int): Ship = {
-    val pressed = inputs.foldLeft(old.pressed) { (s: Set[Key], i: Input) =>
+  def nextShip(s: Ship, inputs: List[Input], now: Int): Ship = {
+    val pressed = inputs.foldLeft(s.pressed) { (s: Set[Key], i: Input) =>
       i.action match {
         case Press => s + i.key
         case Release => s - i.key
@@ -45,44 +48,42 @@ object Game {
         case _ => ⇳
       }
     )
-    val (xOr, yOr) = if((⬄, ⇳) == orientation) (old.xOr, old.yOr) else orientation
+    val (xOr, yOr) = if((⬄, ⇳) == orientation) (s.xOr, s.yOr) else orientation
 
-    import Ship._
-    
     def inBounds(d: Double): Double = {
-      if(d > maxSpeed) maxSpeed
-      else if(d < -maxSpeed) -maxSpeed
-      else if(d < almostZero && d > -almostZero) 0
+      if(d > s.maxSpeed) s.maxSpeed
+      else if(d < -s.maxSpeed) -s.maxSpeed
+      else if(d < s.almostZero && d > -s.almostZero) 0
       else d
     }
     
-    val xSpeed = inBounds((xOr, old.thrusting) match {
-      case (⇦, true) => old.xSpeed - acceleration
-      case (⇨, true) => old.xSpeed + acceleration
-      case _ => old.xSpeed * decelerationRate
+    val xSpeed = inBounds((s.xOr, s.thrusting) match {
+      case (⇦, true) => s.xSpeed - s.acceleration
+      case (⇨, true) => s.xSpeed + s.acceleration
+      case _ => s.xSpeed * s.decelerationRate
     })
 
-    val ySpeed = inBounds((yOr, old.thrusting) match {
-      case (⇧, true) => old.ySpeed - acceleration
-      case (⇩, true) => old.ySpeed + acceleration
-      case _ => old.ySpeed * decelerationRate
+    val ySpeed = inBounds((s.yOr, s.thrusting) match {
+      case (⇧, true) => s.ySpeed - s.acceleration
+      case (⇩, true) => s.ySpeed + s.acceleration
+      case _ => s.ySpeed * s.decelerationRate
     })
     
-    val xPos = old.xPos + xSpeed
-    val yPos = old.yPos + ySpeed
+    val x = s.x + s.xSpeed
+    val y = s.y + s.ySpeed
     
     Ship(
-      xPos=xPos,
-      yPos=yPos,
+      x=x,
+      y=y,
       xSpeed=xSpeed,
       ySpeed=ySpeed,
       xOr,
       yOr,
       pressed,
-      old.dying,
-      dyingSince=old.dyingSince,
+      s.dying,
+      dyingSince=s.dyingSince,
       firingSince=
-        if(inputs.exists(k => k.key == Space && k.action == Press)) now else old.firingSince
+        if(inputs.exists(k => k.key == Space && k.action == Press)) now else s.firingSince
     )
   }
   
