@@ -1,9 +1,7 @@
 package survivor
 
-import scalafx.animation.{ KeyFrame, Timeline }
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.application.JFXApp
-import scalafx.event.ActionEvent
 import scalafx.Includes._
 import scalafx.scene.input.{ KeyCode, KeyEvent }
 import scalafx.scene.layout.BorderPane
@@ -56,14 +54,13 @@ object JvmClient extends JFXApp {
 }
 
 class GameLoop(engine: Engine, gameTime: () => Int) {
-  val keyFrame = KeyFrame(16.ms, onFinished = { _: ActionEvent =>
-    engine.loop(gameTime())
-  })
+  import javafx.animation.AnimationTimer
   
-  new Timeline {
-    keyFrames = Seq(keyFrame)
-    cycleCount = Timeline.INDEFINITE
-  }.play
+  new AnimationTimer {
+    def handle(now: Long): Unit = {
+      engine.loop(gameTime())
+    }
+  }.start()
 }
 
   
