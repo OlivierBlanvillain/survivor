@@ -32,6 +32,7 @@ lazy val jsClient = project.in(file("js-client"))
   .settings(jsDependencies +=
     "org.webjars" % "sockjs-client" % "0.3.4" / "sockjs.min.js")
   .dependsOn(reactUi)
+  .dependsOn(jsLagComp)
 
 lazy val jvmClient = project.in(file("jvm-client"))
   .settings(commonSettings: _*)
@@ -41,6 +42,7 @@ lazy val jvmClient = project.in(file("jvm-client"))
     "org.scalajs" %% "transporttyrus" % "0.1-SNAPSHOT",
     "com.scalatags" %% "scalatags" % "0.4.2",
     "com.lihaoyi" %% "upickle" % "0.2.5"))
+  .dependsOn(jvmLagComp)
 
 lazy val reactUi = project.in(file("react-ui"))
   .settings((commonSettings ++ scalaJSSettings): _*)
@@ -53,3 +55,17 @@ lazy val reactUi = project.in(file("react-ui"))
     "com.lihaoyi" %%% "upickle" % "0.2.5"))
   .settings(jsDependencies +=
     "org.webjars" % "react" % "0.11.1" / "react-with-addons.js" commonJSName "React")
+
+lazy val jsLagComp = project.in(file("latency-compensation/js"))
+  .settings((commonSettings ++ scalaJSSettings): _*)
+  .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / "../shared")
+  .settings(libraryDependencies ++= Seq(
+    "org.scalajs" %%% "transportjavascript" % "0.1-SNAPSHOT",
+    "com.lihaoyi" %%% "upickle" % "0.2.5"))
+
+lazy val jvmLagComp = project.in(file("latency-compensation/jvm"))
+  .settings(commonSettings: _*)
+  .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / "../shared")
+  .settings(libraryDependencies ++= Seq(
+    "org.scalajs" %% "transporttyrus" % "0.1-SNAPSHOT",
+    "com.lihaoyi" %%% "upickle" % "0.2.5"))

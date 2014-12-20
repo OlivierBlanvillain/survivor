@@ -1,16 +1,16 @@
-package survivor
+package lagcomp
 
 import scala.concurrent.{ ExecutionContext, Promise }
 import transport._
 import upickle._
 
-class Network(transport: WebSocketTransport, engine: Engine)(implicit ec: ExecutionContext) {
+class Network(connection: Future[ConnectionHandle], engine: Engine)(implicit ec: ExecutionContext) {
   var initialize = false
 
   val url = WebSocketUrl("ws://localhost:8080/ws")
   // val engine = new Engine(Game.initialState, Game.nextState, Ui.render)
   
-  val promise = Promise[((Player => Event) => Unit, () => Int)]()
+  val promise = Promise[((Peer => Event) => Unit, () => Int)]()
   
   transport.connect(url) foreach { connection =>
 
@@ -31,7 +31,7 @@ class Network(transport: WebSocketTransport, engine: Engine)(implicit ec: Execut
         
         val FPS = 60
         def gameTime(): Int = (System.currentTimeMillis() - startTime).toInt * FPS / 1000
-        def fireEvent(anonymousEvent: Player => Event): Unit = {
+        def fireEvent(anonymousEvent: Peer => Event): Unit = {
           val event = anonymousEvent(me)
           engine.receive(event)
           connection.write(upickle.write(event))
@@ -44,7 +44,7 @@ class Network(transport: WebSocketTransport, engine: Engine)(implicit ec: Execut
     
   }
   
-  def onConnected(callback: (((Player => Event) => Unit, () => Int)) => Unit): Unit = {
+  def onConnected(callback: (((Peer => Event) => Unit, () => Int)) => Unit): Unit = {
     promise.future foreach callback
   }
 }
