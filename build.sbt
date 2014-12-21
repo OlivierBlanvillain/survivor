@@ -55,6 +55,7 @@ lazy val reactUi = project.in(file("react-ui"))
     "com.lihaoyi" %%% "upickle" % "0.2.5"))
   .settings(jsDependencies +=
     "org.webjars" % "react" % "0.11.1" / "react-with-addons.js" commonJSName "React")
+  .dependsOn(jsLagComp)
 
 lazy val jsLagComp = project.in(file("latency-compensation/js"))
   .settings((commonSettings ++ scalaJSSettings): _*)

@@ -1,8 +1,10 @@
 package survivor
 
+import lagcomp._
+
 object Game {
-  def nextState(state: State, inputs: List[Input]): State = {
-    val (myInputs, hisInputs) = inputs.partition(_.player == P1)
+  def nextState(state: State, inputs: Set[Event[Input]]): State = {
+    val (myInputs, hisInputs) = inputs.partition(_.peer == P1)
     val t = state.time
     
     val inCollision: List[Shape] = Collision.of(state.myShip :: state.hisShip :: state.gunfires, t)
@@ -29,8 +31,10 @@ object Game {
     } else Nil
   }
   
-  def nextShip(oldShip: Ship, inputs: List[Input], now: Int): Ship = {
+  def nextShip(oldShip: Ship, events: Set[Event[Input]], now: Int): Ship = {
     import oldShip._
+    
+    val inputs = events.map(_.input)
     
     val orientation = (
       (pressed(Left), pressed(Right)) match {

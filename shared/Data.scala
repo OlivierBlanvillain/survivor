@@ -11,10 +11,6 @@ sealed trait Action
 case object Press extends Action
 case object Release extends Action
 
-sealed trait Player
-case object P1 extends Player
-case object P2 extends Player
-
 sealed trait XOr { def opposite: XOr }
 case object ⇦ extends XOr { def opposite = ⇨ }
 case object ⇨ extends XOr { def opposite = ⇦ }
@@ -25,9 +21,7 @@ case object ⇧ extends YOr { def opposite = ⇩ }
 case object ⇩ extends YOr { def opposite = ⇧ }
 case object ⇳ extends YOr { def opposite = ⇳ }
 
-case class Input(key: Key, action: Action, player: Player)
-
-case class Event(input: Input, time: Int)
+case class Input(key: Key, action: Action)
 
 case class State(time: Int, myShip: Ship, hisShip: Ship, gunfires: List[Gunfire])
 

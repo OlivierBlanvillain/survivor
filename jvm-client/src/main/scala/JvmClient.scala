@@ -14,7 +14,10 @@ import javafx.beans.value.ObservableValue
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+import transport._
 import transport.tyrus._
+
+import lagcomp._
 
 object JvmClient extends JFXApp {
   lazy val webView = new WebView()
@@ -23,13 +26,17 @@ object JvmClient extends JFXApp {
   val ui = new Ui(webView) 
   
   onLoad(webView) {
-    val engine = new Engine(Game.initialState, Game.nextState, ui.render)
-    val transport = new WebSocketClient()
+    val futureConnection = new WebSocketClient().connect(WebSocketUrl("ws://localhost:8080/ws"))
     
-    new Network(transport, engine).onConnected { case (fireEvent, gameTime) =>
-      new ShowFps(root, webView)
-      new GameLoop(engine, gameTime)
-      new KeyboardListener(fireEvent, gameTime, root)
+    futureConnection.foreach { connection => 
+      val engine = new Engine[Input, State](
+        Game.initialState,
+        Game.nextState,
+        ui.render,
+        connection)
+      
+      engine.futureAct.foreach(new KeyboardListener(_, root))
+      engine.futureRender.foreach(new GameLoop(_))
     }
   }
 
@@ -53,18 +60,16 @@ object JvmClient extends JFXApp {
 
 }
 
-class GameLoop(engine: Engine, gameTime: () => Int) {
+class GameLoop(render: () => Unit) {
   import javafx.animation.AnimationTimer
   
   new AnimationTimer {
-    def handle(now: Long): Unit = {
-      engine.loop(gameTime())
-    }
+    def handle(now: Long): Unit = render()
   }.start()
 }
 
   
-class KeyboardListener(fireEvent: (Player => Event) => Unit, getFrame: () => Int, scene: Scene) {
+class KeyboardListener(act: Input => Unit, scene: Scene) {
   scene.setOnKeyPressed(listener(Press) _)
   scene.setOnKeyReleased(listener(Release) _)
 
@@ -82,7 +87,7 @@ class KeyboardListener(fireEvent: (Player => Event) => Unit, getFrame: () => Int
     optionalKey.foreach { key =>
       if((key, action) != lastKey) {
         lastKey = (key, action)
-        fireEvent(me => Event(Input(key, action, me), getFrame() + 1))
+        act(Input(key, action))
       }
     }
   }

@@ -1,21 +1,29 @@
 package survivor
 
+
 object JsClient extends scala.scalajs.js.JSApp {
   import scalajs.concurrent.JSExecutionContext.Implicits.runNow
+  import transport._
   import transport.javascript._
+  import lagcomp._
   
   def main(): Unit = {
-    val engine = new Engine(Game.initialState, Game.nextState, ReactUi.render)
-    val transport = new WebSocketClient()
+    val futureConnection = new WebSocketClient().connect(WebSocketUrl("ws://localhost:8080/ws"))
     
-    new Network(transport, engine).onConnected { case (fireEvent, gameTime) =>
-      new GameLoop(engine, gameTime)
-      new KeyboardListener(fireEvent, gameTime)
+    futureConnection.foreach { connection => 
+      val engine = new Engine[Input, State](
+        Game.initialState,
+        Game.nextState,
+        ReactUi.render,
+        connection)
+      
+      engine.futureAct.foreach(new KeyboardListener(_))
+      engine.futureRender.foreach(new GameLoop(_))
     }
   }
 }
 
-class GameLoop(engine: Engine, gameTime: () => Int) {
+class GameLoop(render: () => Unit) {
   import org.scalajs.dom
   
   val AFK_FRAME_INTERVAL = 1000
@@ -23,10 +31,9 @@ class GameLoop(engine: Engine, gameTime: () => Int) {
   var callId: Int = 0
 
   def rafLoop(t0: Double): Unit = {
-    val loop = () => engine.loop(gameTime())
     dom.window.clearInterval(callId)
-    callId = dom.window.setInterval(loop, AFK_FRAME_INTERVAL)
-    loop()
+    callId = dom.window.setInterval(render, AFK_FRAME_INTERVAL)
+    render()
     showfps(t0)
     dom.window.requestAnimationFrame(rafLoop _)
   }
@@ -34,7 +41,7 @@ class GameLoop(engine: Engine, gameTime: () => Int) {
   rafLoop(0)
 }
 
-class KeyboardListener(fireEvent: (Player => Event) => Unit, getFrame: () => Int) {
+class KeyboardListener(act: Input => Unit) {
   import org.scalajs.dom
   import dom.extensions.KeyCode
   
@@ -57,7 +64,7 @@ class KeyboardListener(fireEvent: (Player => Event) => Unit, getFrame: () => Int
       domEvent.preventDefault()
       if((key, action) != lastKey) {
         lastKey = (key, action)
-        fireEvent(me => Event(Input(key, action, me), getFrame() + 1))
+        act(Input(key, action))
       }
     }
   }
