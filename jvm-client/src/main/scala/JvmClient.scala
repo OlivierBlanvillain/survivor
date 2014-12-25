@@ -36,7 +36,8 @@ object JvmClient extends JFXApp {
         connection)
       
       engine.futureAct.foreach(new KeyboardListener(_, root))
-      engine.futureRender.foreach(new GameLoop(_))
+
+      new GameLoop(engine.triggerRendering _)
     }
   }
 

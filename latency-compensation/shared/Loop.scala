@@ -2,7 +2,7 @@ package lagcomp
 
 class Loop[Input, State](
       initialState: State,
-      nextState: (State, Set[Event[Input]]) => State,
+      nextState: (State, Set[Move[Input]]) => State,
       render: State => Unit) {
   
   var eventsSoFar: List[Event[Input]] = List()
@@ -21,7 +21,9 @@ class Loop[Input, State](
   
   def computeState(time: Int, events: List[Event[Input]]): State = {
     lazy val (nowEvents, prevEvents) = events.span(_.time == time)
-    lazy val recursively = nextState(computeState(time - 1, prevEvents), nowEvents.toSet)
+    lazy val recursively = nextState(
+      computeState(time - 1, prevEvents),
+      nowEvents.map(_.move).toSet)
     if(time == 0) {
       initialState
     } else {

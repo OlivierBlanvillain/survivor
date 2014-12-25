@@ -18,7 +18,8 @@ object JsClient extends scala.scalajs.js.JSApp {
         connection)
       
       engine.futureAct.foreach(new KeyboardListener(_))
-      engine.futureRender.foreach(new GameLoop(_))
+      
+      new GameLoop(engine.triggerRendering _)
     }
   }
 }
