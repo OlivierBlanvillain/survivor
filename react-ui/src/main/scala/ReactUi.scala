@@ -6,21 +6,19 @@ import org.scalajs.dom
 
 import upickle._
 
-import japgolly.scalajs.react._ 
-import vdom.ReactVDom._         
-import vdom.ReactVDom.all._     
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.all._
 
-@JSExport
+@JSExport("ReactUi")
 object ReactUi {
   implicit class RichBoolean(val b: Boolean) extends AnyVal {
     final def option[A](a: => A): Option[A] = if (b) Some(a) else None
   }
 
-  def component[T <: AnyRef](r: T => VDom) = ReactComponentB[T]("")
+  def component[T <: AnyRef](r: T => ReactElement) = ReactComponentB[T]("")
     .render(r)
     .shouldComponentUpdate((scope, props, _) => scope.props ne props)
     .build
-    
 
   val ship = component[Ship] { s =>
     import s._
@@ -52,7 +50,7 @@ object ReactUi {
     world(state) render dom.document.getElementById("world")
   }
   
-  @JSExport
+  @JSExport("renderString")
   def renderString(string: String): Unit = {
     val state = upickle.read[State](string)
     render(state)

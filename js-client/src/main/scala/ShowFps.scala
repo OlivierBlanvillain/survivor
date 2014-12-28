@@ -15,7 +15,5 @@ class ShowFps {
 
   var fpsOut = dom.document.getElementById("fps")
   
-  dom.window.setInterval({ _: Any =>
-    fpsOut.innerHTML = (1000 / frameTime).toInt.toString
-  }, 1000)
+  dom.window.setInterval(() => fpsOut.innerHTML = (1000 / frameTime).toInt.toString, 1000)
 }
