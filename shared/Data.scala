@@ -7,9 +7,9 @@ case object Right extends Key
 case object Left extends Key
 case object Space extends Key
 
-sealed trait Action
-case object Press extends Action
-case object Release extends Action
+sealed trait KeyAction
+case object Press extends KeyAction
+case object Release extends KeyAction
 
 sealed trait XOr { def opposite: XOr }
 case object ⇦ extends XOr { def opposite = ⇨ }
@@ -21,7 +21,7 @@ case object ⇧ extends YOr { def opposite = ⇩ }
 case object ⇩ extends YOr { def opposite = ⇧ }
 case object ⇳ extends YOr { def opposite = ⇳ }
 
-case class Input(key: Key, action: Action)
+case class Input(key: Key, action: KeyAction)
 
 case class State(time: Int, myShip: Ship, hisShip: Ship, gunfires: List[Gunfire])
 

@@ -2,10 +2,9 @@ package lagcomp
 
 import scala.concurrent._
 import transport.ConnectionHandle
-import scala.util.Success
+import scala.util._
 
-case class Move[Input](input: Input, peer: Peer)
-case class Event[Input](move: Move[Input], time: Int)
+case class Event[Input](move: Action[Input], time: Int)
 
 sealed trait Peer
 case object P1 extends Peer
@@ -13,51 +12,44 @@ case object P2 extends Peer
 
 class Engine[Input, State](
       initialState: State,
-      nextState: (State, Set[Move[Input]]) => State,
+      nextState: (State, Set[Action[Input]]) => State,
       render: State => Unit,
-      connection: ConnectionHandle
+      broadcast: ConnectionHandle
     )(implicit
       ec: ExecutionContext,
       iw: upickle.Writer[Event[Input]],
       ir: upickle.Reader[Event[Input]]
-    ) {
+    ) extends AbstractEngine(initialState, nextState, render, broadcast) {
   
-  type Act = Input => Unit
-  type Render = () => Unit
-
   def triggerRendering(): Unit = {
     clockSync.futureGlobalTime.value match {
       case Some(Success(globalTime)) =>
-        loop.render(globalTime())
+        render(loop.stateAt(globalTime()))
       case _ =>
-        loop.render(0)
+        render(loop.stateAt(0))
     }
   }
-  def futureAct: Future[Act] = actPromise.future
+  def futureAct: Future[Input => Unit] = actPromise.future
   
-  private val actPromise = Promise[Act]()
-  private val renderPromise = Promise[Render]()
+  private val actPromise = Promise[Input => Unit]()
 
-  val loop = new Loop(initialState, nextState, render)     
-  val clockSync = new ClockSync(connection)
+  val loop = new Loop(initialState, nextState)
+  val clockSync = new ClockSync(broadcast)
   
-  connection.handlerPromise.success { pickle =>
-    if(clockSync.pending)
+  broadcast.handlerPromise.success { pickle =>
+    if(clockSync.pending) {
       clockSync.receive(pickle)
-    else
+    } else {
       loop.receive(upickle.read[Event[Input]](pickle))
+    }
   }
-  
-  for {
-    globalTime <- clockSync.futureGlobalTime
-  } renderPromise.success(() => loop.render(globalTime()))
   
   for {
     globalTime <- clockSync.futureGlobalTime
     identity <- clockSync.futureIdentity
   } actPromise.success { input =>
-    val event = Event(Move(input, identity), globalTime())
+    val event = Event(Action(input, identity), globalTime())
     loop.receive(event)
-    connection.write(upickle.write(event))
+    broadcast.write(upickle.write(event))
   }
 }

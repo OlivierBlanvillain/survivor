@@ -46,12 +46,12 @@ class KeyboardListener(act: Input => Unit) {
   import org.scalajs.dom
   import dom.extensions.KeyCode
   
-  var lastKey: (Key, Action) = (Space, Release)
+  var lastKey: (Key, KeyAction) = (Space, Release)
   
   dom.window.addEventListener("keydown", listener(Press) _, false)
   dom.window.addEventListener("keyup", listener(Release) _, false)
 
-  def listener(action: Action)(e: dom.Event): Unit = {
+  def listener(action: KeyAction)(e: dom.Event): Unit = {
     val domEvent = e.asInstanceOf[dom.KeyboardEvent]
     val optionalKey = domEvent.keyCode match {
       case 32 => Some(Space)

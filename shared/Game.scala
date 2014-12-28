@@ -3,7 +3,7 @@ package survivor
 import lagcomp._
 
 object Game {
-  def nextState(state: State, inputs: Set[Move[Input]]): State = {
+  def nextState(state: State, inputs: Set[Action[Input]]): State = {
     val (myInputs, hisInputs) = inputs.partition(_.peer == P1)
     val t = state.time
     
@@ -31,7 +31,7 @@ object Game {
     } else Nil
   }
   
-  def nextShip(oldShip: Ship, events: Set[Move[Input]], now: Int): Ship = {
+  def nextShip(oldShip: Ship, events: Set[Action[Input]], now: Int): Ship = {
     import oldShip._
     
     val inputs = events.map(_.input)

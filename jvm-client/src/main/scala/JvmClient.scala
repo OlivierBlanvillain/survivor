@@ -74,9 +74,9 @@ class KeyboardListener(act: Input => Unit, scene: Scene) {
   scene.setOnKeyPressed(listener(Press) _)
   scene.setOnKeyReleased(listener(Release) _)
 
-  var lastKey: (Key, Action) = (Space, Release)
+  var lastKey: (Key, KeyAction) = (Space, Release)
 
-  def listener(action: Action)(k: KeyEvent): Unit = {
+  def listener(action: KeyAction)(k: KeyEvent): Unit = {
     val optionalKey = k.code match {
       case KeyCode.SPACE => Some(Space)
       case KeyCode.LEFT => Some(Left)

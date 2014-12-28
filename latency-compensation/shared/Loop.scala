@@ -2,16 +2,15 @@ package lagcomp
 
 class Loop[Input, State](
       initialState: State,
-      nextState: (State, Set[Move[Input]]) => State,
-      render: State => Unit) {
+      nextState: (State, Set[Action[Input]]) => State) {
   
   var eventsSoFar: List[Event[Input]] = List()
   val cache = new WeakMap[List[Event[Input]], State](100)
   
-  def render(time: Int): Unit = {
+  def stateAt(time: Int): State = {
     // If one clock is ahead of the other we might receive inputs from the future.
     val events = eventsSoFar.dropWhile(_.time > time)
-    render(computeState(time, events))
+    computeState(time, events)
   }
   
   def receive(event: Event[Input]): Unit = {
