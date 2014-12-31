@@ -34,7 +34,10 @@ object Game {
   def nextShip(oldShip: Ship, events: Set[Action[Input]], now: Int): Ship = {
     import oldShip._
     
-    val inputs = events.map(_.input)
+    val inputs = events.map(_.input).toList.sortWith {
+      case (Input(_, Press), Input(_, Release)) => true
+      case _ => false
+    }
     
     val orientation = (
       (pressed(Left), pressed(Right)) match {

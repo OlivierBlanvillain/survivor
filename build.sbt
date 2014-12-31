@@ -14,60 +14,38 @@ val commonSettings = Seq(
   )
 )
 
-lazy val server = project.in(file("server"))
-  .settings((commonSettings): _*)
-  .settings(libraryDependencies ++= Seq(
-    "org.scalajs" %% "transportnettyjvm" % "0.1-SNAPSHOT"))
-
-lazy val jsClient = project.in(file("js-client"))
+lazy val survivor = crossProject
+  .crossType(CrossType.Full)
+  .in(file("client"))
   .settings(commonSettings: _*)
-  .enablePlugins(ScalaJSPlugin)
-  .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / "../shared")
-  .settings(persistLauncher := true)
-  // .settings(skip in packageJSDependencies := false)
   .settings(libraryDependencies ++= Seq(
-    "org.scala-js" %%% "scalajs-dom" % "0.7.0",
-    "org.scalajs" %%% "transportjavascriptjs" % "0.1-SNAPSHOT",
+    "com.scalatags" %%% "scalatags" % "0.4.3-M3",
     "com.lihaoyi" %%% "upickle" % "0.2.6-M3"))
-  // .settings(jsDependencies +=
-  //   "org.webjars" % "sockjs-client" % "0.3.4" / "sockjs.min.js")
-  .dependsOn(reactUi)
-  .dependsOn(jsLagComp)
-
-lazy val jvmClient = project.in(file("jvm-client"))
-  .settings(commonSettings: _*)
-  .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / "../shared")
-  .settings(libraryDependencies ++= Seq(
-    "org.scalafx" %% "scalafx" % "8.0.0-R4",
-    "org.scalajs" %% "transporttyrusjvm" % "0.1-SNAPSHOT",
-    "com.scalatags" %% "scalatags" % "0.4.3-M3",
-    "com.lihaoyi" %% "upickle" % "0.2.6-M3"))
-  .dependsOn(jvmLagComp)
-
-lazy val reactUi = project.in(file("react-ui"))
-  .settings(commonSettings: _*)
-  .enablePlugins(ScalaJSPlugin)
-  .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / "../shared")
-  // .settings(skip in packageJSDependencies := false)
-  .settings(libraryDependencies ++= Seq(
-    "org.scalajs" %%% "transportjavascriptjs" % "0.1-SNAPSHOT",
+  .jsSettings(persistLauncher in Compile := true)
+  .jsSettings(libraryDependencies ++= Seq(
+    "org.scalajs" %%% "transport-javascript" % "0.1-SNAPSHOT",
     "com.github.japgolly.scalajs-react" %%% "core" % "0.7.1-SNAPSHOT",
-    "com.lihaoyi" %%% "upickle" % "0.2.6-M3"))
-  // .settings(jsDependencies +=
-  //   "org.webjars" % "react" % "0.12.1" / "react-with-addons.js" commonJSName "React")
-  .dependsOn(jsLagComp)
+    "org.scala-js" %%% "scalajs-dom" % "0.7.0"))
+  .jvmSettings(libraryDependencies ++= Seq(
+    "org.scalajs" %%% "transport-tyrus" % "0.1-SNAPSHOT",
+    "org.scalafx" %% "scalafx" % "8.0.0-R4"))
+  .dependsOn(lagComp)
+lazy val survivorJVM = survivor.jvm
+lazy val survivorJS = survivor.js
 
-lazy val jsLagComp = project.in(file("latency-compensation/js"))
+lazy val lagComp = crossProject
+  .crossType(CrossType.Pure)
+  .in(file("lag-comp"))
   .settings(commonSettings: _*)
-  .enablePlugins(ScalaJSPlugin)
-  .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / "../shared")
+  .settings(name := "lag-comp")
   .settings(libraryDependencies ++= Seq(
-    "org.scalajs" %%% "transportjavascriptjs" % "0.1-SNAPSHOT",
+    "org.scalajs" %%% "transport-core" % "0.1-SNAPSHOT",
     "com.lihaoyi" %%% "upickle" % "0.2.6-M3"))
+lazy val lagCompJVM = lagComp.jvm
+lazy val lagCompJS = lagComp.js
 
-lazy val jvmLagComp = project.in(file("latency-compensation/jvm"))
+lazy val server = project
+  .in(file("server"))
   .settings(commonSettings: _*)
-  .settings(unmanagedSourceDirectories in Compile += baseDirectory.value / "../shared")
   .settings(libraryDependencies ++= Seq(
-    "org.scalajs" %% "transporttyrusjvm" % "0.1-SNAPSHOT",
-    "com.lihaoyi" %%% "upickle" % "0.2.6-M3"))
+    "org.scalajs" %% "transport-netty" % "0.1-SNAPSHOT"))
