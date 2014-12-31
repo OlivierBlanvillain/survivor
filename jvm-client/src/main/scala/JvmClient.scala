@@ -37,6 +37,7 @@ object JvmClient extends JFXApp {
       
       engine.futureAct.foreach(new KeyboardListener(_, root))
 
+      new ShowFps(root, webView)
       new GameLoop(engine.triggerRendering _)
     }
   }
@@ -110,7 +111,7 @@ class Ui(webView: WebView) {
     body(
       div(id:="world"),
       div(id:="stats", "FPS: ", span(id:="fps", "N/A")),
-      script(src:=projectRoot+"/react-ui/target/scala-2.11/reactui-jsdeps.js"),
+      script(src:="http://cdnjs.cloudflare.com/ajax/libs/react/0.12.1/react.min.js"),
       script(src:=projectRoot+"/react-ui/target/scala-2.11/reactui-fastopt.js")
     )
   ).toString)

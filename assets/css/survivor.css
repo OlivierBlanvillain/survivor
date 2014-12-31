@@ -481,6 +481,7 @@ body.show-help #world-container {
  -webkit-transform: rotate(-90deg);
 }
 
+/* Original, glitching in JavaFx webkit view.
 .ship-gunfire {
  position: absolute;
  width: 6px;
@@ -489,7 +490,22 @@ body.show-help #world-container {
  margin-left: -3px;
  background: #fff;
  border-radius: 100%;
+} */
+
+.ship-gunfire {
+ position: absolute;
+ width: 6px;
+ height: 6px;
+ margin-top: -13px;
+ margin-left: -13px;
+ background: #fff;
+ border-radius: 100%;
+ border: 10px solid rgba(0, 0, 0, 0.01);
+ -moz-background-clip: padding;
+ -webkit-background-clip: padding;
+ background-clip: padding-box;
 }
+
 
 .big-explosion {
  position: absolute;
