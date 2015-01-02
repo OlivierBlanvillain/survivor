@@ -4,11 +4,14 @@ package survivor
 object JsClient extends scala.scalajs.js.JSApp {
   import scalajs.concurrent.JSExecutionContext.Implicits.runNow
   import transport._
+  import transport.webrtc._
   import transport.javascript._
   import lagcomp._
   
   def main(): Unit = {
-    val futureConnection = new WebSocketClient().connect(WebSocketUrl("ws://localhost:8080/ws"))
+    val futureConnection = new WebSocketClient()
+      .connect(WebSocketUrl("ws://localhost:8080/ws"))
+      .flatMap(new WebRTCSignalingFallback().connect(_))
     
     futureConnection.foreach { connection => 
       val engine = new Engine[Input, State](

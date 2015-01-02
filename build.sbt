@@ -19,6 +19,7 @@ lazy val survivor = crossProject
   .in(file("client"))
   .settings(commonSettings: _*)
   .settings(libraryDependencies ++= Seq(
+    "org.scalajs" %%% "transport-webrtc" % "0.1-SNAPSHOT",
     "com.scalatags" %%% "scalatags" % "0.4.3-M3",
     "com.lihaoyi" %%% "upickle" % "0.2.6-M3"))
   .jsSettings(persistLauncher in Compile := true)
@@ -47,5 +48,5 @@ lazy val lagCompJS = lagComp.js
 lazy val server = project
   .in(file("server"))
   .settings(commonSettings: _*)
-  .settings(libraryDependencies ++= Seq(
-    "org.scalajs" %% "transport-netty" % "0.1-SNAPSHOT"))
+  .settings(libraryDependencies +=
+    "org.scalajs" %% "transport-netty" % "0.1-SNAPSHOT")

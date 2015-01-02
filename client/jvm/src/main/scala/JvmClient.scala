@@ -15,6 +15,7 @@ import javafx.beans.value.ObservableValue
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import transport._
+import transport.webrtc._
 import transport.tyrus._
 
 import lagcomp._
@@ -26,7 +27,9 @@ object JvmClient extends JFXApp {
   val ui = new Ui(webView) 
   
   onLoad(webView) {
-    val futureConnection = new WebSocketClient().connect(WebSocketUrl("ws://localhost:8080/ws"))
+    val futureConnection = new WebSocketClient()
+      .connect(WebSocketUrl("ws://localhost:8080/ws"))
+      .flatMap(new WebRTCSignalingFallback().connect(_))
     
     futureConnection.foreach { connection => 
       val engine = new Engine[Input, State](
