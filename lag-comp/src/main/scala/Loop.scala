@@ -1,6 +1,6 @@
 package lagcomp
 
-class Loop[Input, State](
+class StateLoop[Input, State](
       initialState: State,
       nextState: (State, Set[Action[Input]]) => State) {
   

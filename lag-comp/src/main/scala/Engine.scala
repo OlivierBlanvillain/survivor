@@ -33,7 +33,7 @@ class Engine[Input, State](
   
   private val actPromise = Promise[Input => Unit]()
 
-  val loop = new Loop(initialState, nextState)
+  val loop = new StateLoop(initialState, nextState)
   val clockSync = new ClockSync(broadcast)
   
   broadcast.handlerPromise.success { pickle =>

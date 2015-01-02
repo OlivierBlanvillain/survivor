@@ -80,7 +80,6 @@ object World {
   val widthPx = width * unitPx
   val heightPx = height * unitPx
   
-  def contains(x: Double, y: Double): Boolean = {
-    x < 0 || x > World.widthPx || y < 0 || y > World.heightPx
-  }
+  def contains(x: Double, y: Double): Boolean =
+    !(x < 0 || x > World.widthPx || y < 0 || y > World.heightPx)
 }

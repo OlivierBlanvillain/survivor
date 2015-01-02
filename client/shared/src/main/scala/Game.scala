@@ -13,7 +13,7 @@ object Game {
     if(inCollision.nonEmpty) println("---------------------")
     
     val gunfires: List[Gunfire] = fires(state.myShip, t) ::: fires(state.hisShip, t) :::
-      state.gunfires.filterNot { gf => World.contains(x=gf.x(t), y=gf.y(t)) }
+      state.gunfires.filter { gf => World.contains(x=gf.x(t), y=gf.y(t)) }
     
     State(
       state.time + 1,
@@ -60,8 +60,8 @@ object Game {
     }
     
     Ship(
-      x=x + xSpeed,
-      y=y + ySpeed,
+      x=if(World.contains(x + xSpeed, y)) x + xSpeed else x,
+      y=if(World.contains(x, y + ySpeed)) y + ySpeed else y,
       
       xSpeed=inBounds((xOr, thrusting) match {
         case (⇦, true) => xSpeed - acceleration
