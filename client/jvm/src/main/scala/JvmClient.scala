@@ -29,7 +29,7 @@ object JvmClient extends JFXApp {
   onLoad(webView) {
     val futureConnection = new WebSocketClient()
       .connect(WebSocketUrl("ws://localhost:8080/ws"))
-      .flatMap(new WebRTCClientFallback().connect(_))
+      // .flatMap(new WebRTCClientFallback().connect(_))
     
     futureConnection.foreach { connection => 
       val engine = new Engine[Input, State](

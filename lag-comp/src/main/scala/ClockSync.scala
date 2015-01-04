@@ -14,7 +14,7 @@ class ClockSync(connection: ConnectionHandle) {
 
   val selfStartTime = System.currentTimeMillis()
   connection.write(selfStartTime.toString)
-    
+  
   def receive(pickle: String): Unit = {
     val remoteStartTime = pickle.toLong
     val startTime = Math.max(selfStartTime, remoteStartTime)

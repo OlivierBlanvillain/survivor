@@ -52,13 +52,15 @@ case class Gunfire(createdAt: Int, xInit: Double, yInit: Double, xOr: XOr, yOr: 
 case class Ship(
   x: Double,
   y: Double,
+  xRespawn: Double,
+  yRespawn: Double,
   xSpeed: Double = 0,
   ySpeed: Double = 0,
   xOr: XOr = ⬄,
   yOr: YOr = ⇧,
   pressed: Set[Key] = Set(),
-  dying: Boolean = false,
-  dyingSince: Int = 0,
+  dead: Boolean = false,
+  deadSince: Int = 0,
   firingSince: Int = 0
 ) extends Circle {
   def thrusting: Boolean = pressed.filterNot(_ == Space).nonEmpty
@@ -71,6 +73,7 @@ case class Ship(
   val almostZero = 0.01
   val maxSpeed = 4.0
   val firingRate = 10
+  val respawnDelay = 100
 }
 
 object World {

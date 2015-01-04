@@ -7,18 +7,16 @@ object Game {
     val (myInputs, hisInputs) = inputs.partition(_.peer == P1)
     val t = state.time
     
-    val inCollision: List[Shape] = Collision.of(state.myShip :: state.hisShip :: state.gunfires, t)
-    
-    inCollision foreach println // TODO debug
-    if(inCollision.nonEmpty) println("---------------------")
+    val inCollision: List[Shape] = Collision.of(
+      List(state.myShip, state.hisShip).filterNot(_.dead) ::: state.gunfires, t)
     
     val gunfires: List[Gunfire] = fires(state.myShip, t) ::: fires(state.hisShip, t) :::
-      state.gunfires.filter { gf => World.contains(x=gf.x(t), y=gf.y(t)) }
+      state.gunfires.diff(inCollision).filter { gf => World.contains(x=gf.x(t), y=gf.y(t)) }
     
     State(
       state.time + 1,
-      myShip=nextShip(state.myShip, myInputs, t),
-      hisShip=nextShip(state.hisShip, hisInputs, t),
+      myShip=nextShip(state.myShip, myInputs, t, inCollision.contains(state.myShip)),
+      hisShip=nextShip(state.hisShip, hisInputs, t, inCollision.contains(state.hisShip)),
       gunfires)
   }
   
@@ -31,7 +29,7 @@ object Game {
     } else Nil
   }
   
-  def nextShip(oldShip: Ship, events: Set[Action[Input]], now: Int): Ship = {
+  def nextShip(oldShip: Ship, events: Set[Action[Input]], now: Int, collision: Boolean): Ship = {
     import oldShip._
     
     val inputs = events.map(_.input).toList.sortWith {
@@ -59,37 +57,54 @@ object Game {
       else d
     }
     
-    Ship(
-      x=if(World.contains(x + xSpeed, y)) x + xSpeed else x,
-      y=if(World.contains(x, y + ySpeed)) y + ySpeed else y,
-      
-      xSpeed=inBounds((xOr, thrusting) match {
-        case (⇦, true) => xSpeed - acceleration
-        case (⇨, true) => xSpeed + acceleration
-        case _ => xSpeed * decelerationRate
-      }),
-      
-      ySpeed=inBounds((yOr, thrusting) match {
-        case (⇧, true) => ySpeed - acceleration
-        case (⇩, true) => ySpeed + acceleration
-        case _ => ySpeed * decelerationRate
-      }),
-      
-      xOr=if((⬄, ⇳) == orientation) xOr else orientation._1,
-      yOr=if((⬄, ⇳) == orientation) yOr else orientation._2,
-      
-      pressed=inputs.foldLeft(pressed) { (s: Set[Key], i: Input) =>
-        i.action match {
-          case Press => s + i.key
-          case Release => s - i.key
-        }
-      },
-      
-      dying=dying,
-      dyingSince=dyingSince,
-      firingSince=if(inputs.exists(k => k.key == Space && k.action == Press)) now else firingSince
-    )
+    val newPressed = inputs.foldLeft(pressed) { (s: Set[Key], i: Input) =>
+      i.action match {
+        case Press => s + i.key
+        case Release => s - i.key
+      }
+    }
+    
+    if(dead && (now - deadSince < respawnDelay)) {
+      oldShip.copy(pressed=newPressed)
+    } else if(dead) {
+      Ship(
+        x=xRespawn,
+        y=yRespawn,
+        xRespawn=xRespawn,
+        yRespawn=yRespawn,
+        pressed=newPressed,
+        dead=false,
+        deadSince=deadSince,
+        firingSince=firingSince
+      )
+    } else {
+      Ship(
+        x=if(World.contains(x + xSpeed, y)) x + xSpeed else x,
+        y=if(World.contains(x, y + ySpeed)) y + ySpeed else y,
+        xRespawn=xRespawn,
+        yRespawn=yRespawn,
+        
+        xSpeed=inBounds((xOr, thrusting) match {
+          case (⇦, true) => xSpeed - acceleration
+          case (⇨, true) => xSpeed + acceleration
+          case _ => xSpeed * decelerationRate
+        }),
+        
+        ySpeed=inBounds((yOr, thrusting) match {
+          case (⇧, true) => ySpeed - acceleration
+          case (⇩, true) => ySpeed + acceleration
+          case _ => ySpeed * decelerationRate
+        }),
+        
+        xOr=if((⬄, ⇳) == orientation) xOr else orientation._1,
+        yOr=if((⬄, ⇳) == orientation) yOr else orientation._2,
+        pressed=newPressed,
+        dead=collision,
+        deadSince=if(collision) now else deadSince,
+        firingSince=if(inputs.exists(k => k.key == Space && k.action == Press)) now else firingSince
+      )
+    }
   }
   
-  val initialState: State = State(0, Ship(32, 32), Ship(64, 64), List())
+  val initialState: State = State(0, Ship(32, 32, 32, 32), Ship(64, 64, 64, 64), List())
 }
