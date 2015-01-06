@@ -10,7 +10,7 @@ class AbstractEngine[Input, State](
     initialState: State,
     nextState: (State, Set[Action[Input]]) => State,
     render: State => Unit,
-    broadcast: ConnectionHandle){
+    broadcastConnection: ConnectionHandle) {
   
   def triggerRendering(): Unit
   def futureAct: Future[Input => Unit]
