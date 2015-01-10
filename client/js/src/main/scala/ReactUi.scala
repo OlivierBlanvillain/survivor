@@ -59,9 +59,15 @@ object ReactUi {
       div(cls:="ship-gunfire", top:=gunfire.y(now), left:=gunfire.x(now))
     })
   }
+
+  val blocks = component[(List[Block], Int)] { case (bs, now) =>
+    div(bs.map { block =>
+      div(cls:="block type-" + block.tpe, top:=block.y, left:=block.x)
+    })
+  }
   
   val world = component[State] { s =>
-    div(ship((s.myShip, s.time)), ship((s.hisShip, s.time)), gunfires((s.gunfires, s.time)))
+    div(ship((s.myShip, s.time)), ship((s.hisShip, s.time)), gunfires((s.gunfires, s.time)), blocks((s.blocks, s.time)))
   }
 
   def render(state: State): Unit = {

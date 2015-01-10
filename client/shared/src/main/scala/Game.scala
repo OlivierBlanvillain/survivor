@@ -17,7 +17,8 @@ object Game {
       state.time + 1,
       myShip=nextShip(state.myShip, myInputs, t, inCollision.contains(state.myShip)),
       hisShip=nextShip(state.hisShip, hisInputs, t, inCollision.contains(state.hisShip)),
-      gunfires)
+      gunfires,
+      state.blocks)
   }
   
   def fires(ship: Ship, now: Int): List[Gunfire] = {
@@ -105,6 +106,4 @@ object Game {
       )
     }
   }
-  
-  val initialState: State = State(0, Ship(32, 32, 32, 32), Ship(64, 64, 64, 64), List())
 }

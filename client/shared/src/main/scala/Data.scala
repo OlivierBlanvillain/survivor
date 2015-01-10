@@ -23,7 +23,14 @@ case object ⇳ extends YOr { def opposite = ⇳ }
 
 case class Input(key: Key, action: KeyAction)
 
-case class State(time: Int, myShip: Ship, hisShip: Ship, gunfires: List[Gunfire])
+case class State(
+  time: Int,
+  myShip: Ship,
+  hisShip: Ship,
+  gunfires: List[Gunfire],
+  blocks: List[Block])
+
+case class Block(x: Double, y: Double, tpe: Int, deadSince: Int = Int.MinValue, damaged: Boolean=false)
 
 case class Gunfire(createdAt: Int, xInit: Double, yInit: Double, xOr: XOr, yOr: YOr)
     extends Circle {
@@ -77,8 +84,8 @@ case class Ship(
 }
 
 object World {
-  val width = 75
-  val height = 50
+  val width = 72
+  val height = 48
   val unitPx = 32
   val widthPx = width * unitPx
   val heightPx = height * unitPx
