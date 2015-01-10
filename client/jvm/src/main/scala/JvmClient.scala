@@ -110,7 +110,7 @@ class Ui(webView: WebView) {
   val projectRoot = "file://" + System.getProperty("user.dir")
   
   webView.engine.loadContent("<!DOCTYPE>" + html(
-    head(link(rel:="stylesheet", href:=projectRoot+"/assets/css/survivor.css")),
+    head(link(rel:="stylesheet", href:=projectRoot+"/client/survivor.css")),
     body(
       div(id:="world"),
       div(id:="stats", "FPS: ", span(id:="fps", "N/A")),

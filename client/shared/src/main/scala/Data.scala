@@ -30,30 +30,30 @@ case class State(
   gunfires: List[Gunfire],
   blocks: List[Block])
 
-case class Block(x: Double, y: Double, tpe: Int, deadSince: Int = Int.MinValue, damaged: Boolean=false)
+case class Block(
+  x: Double,
+  y: Double,
+  deadSince: Int = Int.MinValue,
+  damaged: Boolean=false)
 
-case class Gunfire(createdAt: Int, xInit: Double, yInit: Double, xOr: XOr, yOr: YOr)
-    extends Circle {
-  
-  val xSpeed = 8.0
-  val ySpeed = 8.0
-  
-  val signedXSpeed = xOr match {
-    case ⇦ => xSpeed
-    case ⇨ => -xSpeed
+case class Gunfire(
+  x: Double,
+  y: Double,
+  xOr: XOr,
+  yOr: YOr)
+extends Circle {
+  val xSpeed = xOr match {
+    case ⇦ => 8
+    case ⇨ => -8
     case ⬄ => 0
   }
-
-  val signedYSpeed = yOr match {
-    case ⇩ => -ySpeed
-    case ⇧ => ySpeed
+  val ySpeed = yOr match {
+    case ⇩ => -8
+    case ⇧ => 8
     case ⇳ => 0
   }
-  
-  val initTime = createdAt - 2
-  def x(time: Int): Double = xInit + signedXSpeed * (time - initTime)
-  def y(time: Int): Double = yInit + signedYSpeed * (time - initTime)
   val radius = 3.0
+  def next = Gunfire(x + xSpeed, y + ySpeed, xOr, yOr)
 }
 
 case class Ship(
@@ -71,7 +71,7 @@ case class Ship(
   firingSince: Int = 0
 ) extends Circle {
   def thrusting: Boolean = pressed.filterNot(_ == Space).nonEmpty
-  def firing: Boolean = pressed contains Space
+  def firing: Boolean = !dead && pressed.contains(Space)
   def x(time: Int): Double = x
   def y(time: Int): Double = y
   val radius = 14.0
@@ -84,8 +84,8 @@ case class Ship(
 }
 
 object World {
-  val width = 72
-  val height = 48
+  val width = 35
+  val height = 22
   val unitPx = 32
   val widthPx = width * unitPx
   val heightPx = height * unitPx

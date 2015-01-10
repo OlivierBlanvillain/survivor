@@ -8,16 +8,16 @@ object Game {
     val t = state.time
     
     val inCollision: List[Shape] = Collision.of(
-      List(state.myShip, state.hisShip).filterNot(_.dead) ::: state.gunfires, t)
+      List(state.myShip, state.hisShip).filterNot(_.dead) ::: state.gunfires)
     
     val gunfires: List[Gunfire] = fires(state.myShip, t) ::: fires(state.hisShip, t) :::
-      state.gunfires.diff(inCollision).filter { gf => World.contains(x=gf.x(t), y=gf.y(t)) }
+      state.gunfires.diff(inCollision).filter { gf => World.contains(x=gf.x, y=gf.y) }
     
     State(
       state.time + 1,
       myShip=nextShip(state.myShip, myInputs, t, inCollision.contains(state.myShip)),
       hisShip=nextShip(state.hisShip, hisInputs, t, inCollision.contains(state.hisShip)),
-      gunfires,
+      gunfires.map(_.next),
       state.blocks)
   }
   
@@ -25,8 +25,9 @@ object Game {
     import ship._
     
     if(firing && (now - firingSince) % firingRate == 1) {
-      val gunfire = Gunfire(now, xInit=x, yInit=y, xOr, yOr)
-      List(gunfire, gunfire.copy(xOr=xOr.opposite, yOr=yOr.opposite))
+      val gunfire = Gunfire(x=x, y=y, xOr, yOr)
+      def moveABit(gf: Gunfire) = gf.next.next
+      List(moveABit(gunfire), moveABit(gunfire.copy(xOr=xOr.opposite, yOr=yOr.opposite)))
     } else Nil
   }
   

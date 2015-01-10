@@ -3,22 +3,22 @@ package survivor
 import scala.collection.mutable
 
 object Collision {
-  def of(shapes: List[Shape], time: Int): List[Shape] = {
+  def of(shapes: List[Shape]): List[Shape] = {
     val inCollision = mutable.Set[Shape]()
     val map = mutable.Map[Point, mutable.Set[Shape]]()
 
-    shapes.foreach { shape =>
-      shape.cells(time).foreach { cell =>
+    shapes foreach { shape =>
+      shape.cells foreach { cell =>
         val shapesInCell = map.getOrElseUpdate(cell, mutable.Set[Shape]())
 
-        shapesInCell.foreach { collisionCandidate =>
-          if(collisionCandidate.intersects(shape, time)) {
-            inCollision.add(shape)
-            inCollision.add(collisionCandidate)
+        shapesInCell foreach { collisionCandidate =>
+          if(collisionCandidate intersects shape) {
+            inCollision add shape
+            inCollision add collisionCandidate
           }
         }
         
-        shapesInCell.add(shape)
+        shapesInCell add shape
       }
     }
 
@@ -29,18 +29,18 @@ object Collision {
 case class Point(x: Int, y: Int)
 
 trait Shape {
-  def cells(time: Int): List[Point]
+  def cells: List[Point]
   
-  def x(time: Int): Double
-  def y(time: Int): Double
+  def x: Double
+  def y: Double
   
-  def intersects(shape: Shape, t: Int): Boolean = { 
+  def intersects(shape: Shape): Boolean = { 
     def sq(d: Double) = d * d
     
     (this, shape) match {
       
       case (c1: Circle, c2: Circle) =>
-        val distSq = sq(c1.x(t) - c2.x(t)) + sq(c1.y(t) - c2.y(t))
+        val distSq = sq(c1.x - c2.x) + sq(c1.y - c2.y)
         sq(c1.radius - c2.radius) <= distSq && distSq <= sq(c1.radius + c2.radius)
         
       case (r1: Rectangle, r2: Rectangle) =>
@@ -53,28 +53,28 @@ trait Shape {
 
       case (c: Circle, r: Rectangle) =>
         // Source: http://goo.gl/uwtkVFn
-        val xCircleD = math.abs(c.x(t) - r.x(t))
-        val yCircleD = math.abs(c.y(t) - r.y(t))
-        lazy val cornerD = sq(xCircleD - r.halfWeight(t)) + sq(yCircleD - r.halfHeight(t))
-        if(xCircleD > (r.halfWeight(t) + c.radius)) return false
-        if(yCircleD > (r.halfHeight(t) + c.radius)) return false
-        if(xCircleD <= (r.halfWeight(t))) return true
-        if(yCircleD <= (r.halfHeight(t))) return true
+        val xCircleD = math.abs(c.x - r.x)
+        val yCircleD = math.abs(c.y - r.y)
+        lazy val cornerD = sq(xCircleD - r.halfWeight) + sq(yCircleD - r.halfHeight)
+        if(xCircleD > (r.halfWeight + c.radius)) return false
+        if(yCircleD > (r.halfHeight + c.radius)) return false
+        if(xCircleD <= (r.halfWeight)) return true
+        if(yCircleD <= (r.halfHeight)) return true
         return cornerD <= sq(c.radius)
 
       case (r: Rectangle, c: Circle) =>
-        shape.intersects(this, t)
+        shape intersects this
 
     }
   }
 }
 
 trait Circle extends Shape {
-  def cells(t: Int): List[Point] = {
+  def cells: List[Point] = {
     List(
       Point(1,1), Point(1,-1), Point(-1,1), Point(-1,-1)
     ).map { p =>
-      Point((x(t) + p.x * radius).toInt / World.unitPx, (y(t) + p.y * radius).toInt / World.unitPx)
+      Point((x + p.x * radius).toInt / World.unitPx, (y + p.y * radius).toInt / World.unitPx)
     }.distinct
   }
   
@@ -82,6 +82,6 @@ trait Circle extends Shape {
 }
 
 trait Rectangle extends Shape {
-  def halfWeight(time: Int): Double
-  def halfHeight(time: Int): Double
+  def halfWeight: Double
+  def halfHeight: Double
 }

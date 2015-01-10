@@ -37,7 +37,7 @@ object ReactUi {
       
       div(
         for(i <- List(-1, 0, 1); j <- List(-1, 0, 1) if(!(i == 0 && j == 0))) yield
-          div(cls:=s"big-explosion-$frame", top:=y+8*deadTime*i, left:=x+8*deadTime*j)
+          div(cls:="big-explosion-"+frame, top:=y+8*deadTime*i, left:=x+8*deadTime*j)
       )()
     } else {
       val clazz = List(
@@ -54,27 +54,28 @@ object ReactUi {
     }
   }
   
-  val gunfires = component[(List[Gunfire], Int)] { case (gfs, now) =>
+  val gunfires = component[List[Gunfire]] { gfs =>
     div(gfs.map { gunfire =>
-      div(cls:="ship-gunfire", top:=gunfire.y(now), left:=gunfire.x(now))
+      div(cls:="ship-gunfire", top:=gunfire.y, left:=gunfire.x)
     })
   }
 
   val blocks = component[(List[Block], Int)] { case (bs, now) =>
+    val frame = (now % 128) >> 5
     div(bs.map { block =>
-      div(cls:="block type-" + block.tpe, top:=block.y, left:=block.x)
+      div(cls:="block type-0-"+frame, top:=block.y, left:=block.x)
     })
   }
   
   val world = component[State] { s =>
-    div(ship((s.myShip, s.time)), ship((s.hisShip, s.time)), gunfires((s.gunfires, s.time)), blocks((s.blocks, s.time)))
+    div(ship((s.myShip, s.time)), ship((s.hisShip, s.time)), gunfires(s.gunfires), blocks((s.blocks, s.time)))
   }
 
   def render(state: State): Unit = {
     world(state) render dom.document.getElementById("world")
   }
   
-  @JSExport("renderString")
+  @JSExport
   def renderString(string: String): Unit = {
     val state = upickle.read[State](string)
     render(state)
