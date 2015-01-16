@@ -7,7 +7,7 @@ case class Action[Input](input: Input, peer: Peer)
 
 abstract 
 class AbstractEngine[Input, State](
-    initialState: State,
+    initState: State,
     nextState: (State, Set[Action[Input]]) => State,
     render: State => Unit,
     broadcastConnection: ConnectionHandle) {
