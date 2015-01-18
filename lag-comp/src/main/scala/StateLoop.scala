@@ -18,7 +18,6 @@ class StateLoop[Input, State](
     eventsSoFar = newer ::: event :: older
   }
   
-  // TODO: Split this in 2, both @tailreq!
   def computeState(time: Int, events: List[Event[Input]]): State = {
     lazy val (nowEvents, prevEvents) = events.span(_.time == time)
     lazy val recursively = nextState(

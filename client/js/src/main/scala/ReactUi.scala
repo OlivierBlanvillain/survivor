@@ -61,9 +61,17 @@ object ReactUi {
   }
 
   val blocks = component[(List[Block], Int)] { case (bs, now) =>
-    val frame = (now % 128) >> 5
     div(bs.map { block =>
-      div(cls:="block type-0-"+frame, top:=block.y, left:=block.x)
+      if(block dead now) {
+        div()
+      } else {
+        val clazz = if(block exploding now) {
+          "block exploding-" + ((now % 16) >> 1)
+        } else {
+          "block type-0-" + ((now % 128) >> 5)
+        }
+        div(cls:=clazz, top:=block.y-World.unitPx/2, left:=block.x-World.unitPx/2)
+      }
     })
   }
   

@@ -33,15 +33,22 @@ case class State(
 case class Block(
   x: Double,
   y: Double,
-  deadSince: Int = Int.MinValue,
-  damaged: Boolean=false)
+  damaged: Boolean=false,
+  dying: Boolean=false,
+  lastHit: Int=Int.MinValue
+) extends Rectangle {
+  val halfWeight = 12.0
+  val halfHeight = 12.0
+  def exploding(time: Int) = damaged && time - lastHit < 16
+  def dead(time: Int) = dying && !exploding(time)
+}
 
 case class Gunfire(
   x: Double,
   y: Double,
   xOr: XOr,
-  yOr: YOr)
-extends Circle {
+  yOr: YOr
+) extends Circle {
   val xSpeed = xOr match {
     case ⇦ => 8
     case ⇨ => -8
@@ -76,7 +83,7 @@ case class Ship(
   def y(time: Int): Double = y
   val radius = 14.0
   val acceleration = 0.2
-  val decelerationRate = 0.8
+  val decelerationRate = 0.9
   val almostZero = 0.01
   val maxSpeed = 4.0
   val firingRate = 10
@@ -89,7 +96,6 @@ object World {
   val unitPx = 32
   val widthPx = width * unitPx
   val heightPx = height * unitPx
-  
   def contains(x: Double, y: Double): Boolean =
     !(x < 0 || x > World.widthPx || y < 0 || y > World.heightPx)
 }

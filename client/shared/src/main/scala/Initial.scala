@@ -4,9 +4,10 @@ object Initial {
   def state: State = State(0, Ship(32, 32, 32, 32), Ship(64, 64, 64, 64), List(), blocks)
   
   def blocks: List[Block] = {
+    val u = World.unitPx
     map.lines.toList.zipWithIndex.flatMap { case (line, y) =>
       line.zipWithIndex.flatMap {
-        case ('0', x) => Some(Block(World.unitPx * x.toDouble, World.unitPx * y.toDouble))
+        case ('0', x) => Some(Block(u * x.toDouble + u/2, u * y.toDouble + u/2))
         case _ => None
       }
     }

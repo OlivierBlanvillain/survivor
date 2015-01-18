@@ -14,4 +14,6 @@ class WeakMap[K, V](size: Int) {
       value
     }
   }
+  
+  def get(time: Int, key: K): Option[V] = None
 }

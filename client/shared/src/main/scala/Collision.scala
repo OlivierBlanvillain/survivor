@@ -44,11 +44,12 @@ trait Shape {
         sq(c1.radius - c2.radius) <= distSq && distSq <= sq(c1.radius + c2.radius)
         
       case (r1: Rectangle, r2: Rectangle) =>
-         // function intersect(a, b) {
-         //   return (a.left <= b.right &&
-         //           b.left <= a.right &&
-         //           a.top <= b.bottom &&
-         //           b.top <= a.bottom)
+        // With the currents objects, two rectangles should never be in the same cell.
+        // function intersect(a, b) {
+        //   return (a.left <= b.right &&
+        //           b.left <= a.right &&
+        //           a.top <= b.bottom &&
+        //           b.top <= a.bottom)
         ???
 
       case (c: Circle, r: Rectangle) =>
@@ -82,6 +83,14 @@ trait Circle extends Shape {
 }
 
 trait Rectangle extends Shape {
+  def cells: List[Point] = {
+    List(
+      Point(1,1), Point(1,-1), Point(-1,1), Point(-1,-1)
+    ).map { p =>
+      Point((x + p.x * halfWeight).toInt / World.unitPx, (y + p.y * halfHeight).toInt / World.unitPx)
+    }.distinct
+  }
+  
   def halfWeight: Double
   def halfHeight: Double
 }

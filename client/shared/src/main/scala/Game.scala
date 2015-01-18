@@ -6,19 +6,26 @@ object Game {
   def nextState(state: State, inputs: Set[Action[Input]]): State = {
     val (myInputs, hisInputs) = inputs.partition(_.peer == P1)
     val t = state.time
+    val aliveBlocks = state.blocks.filterNot(_.dead(t))
     
     val inCollision: List[Shape] = Collision.of(
-      List(state.myShip, state.hisShip).filterNot(_.dead) ::: state.gunfires)
+      List(state.myShip, state.hisShip).filterNot(_.dead) ::: state.gunfires ::: aliveBlocks)
     
     val gunfires: List[Gunfire] = fires(state.myShip, t) ::: fires(state.hisShip, t) :::
       state.gunfires.diff(inCollision).filter { gf => World.contains(x=gf.x, y=gf.y) }
+    
+    val nextBlocks: List[Block] = aliveBlocks.map { block =>
+      if(inCollision.contains(block) && !block.dying) {
+        (if(!block.damaged) block.copy(damaged=true) else block.copy(dying=true)).copy(lastHit=t)
+      } else block
+    }
     
     State(
       state.time + 1,
       myShip=nextShip(state.myShip, myInputs, t, inCollision.contains(state.myShip)),
       hisShip=nextShip(state.hisShip, hisInputs, t, inCollision.contains(state.hisShip)),
       gunfires.map(_.next),
-      state.blocks)
+      nextBlocks)
   }
   
   def fires(ship: Ship, now: Int): List[Gunfire] = {
