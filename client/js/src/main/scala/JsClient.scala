@@ -12,7 +12,7 @@ object JsClient extends scala.scalajs.js.JSApp {
     val futureConnection = new WebSocketClient()
       // .connect(WebSocketUrl("wss://sleepy-atoll-7403.herokuapp.com/ws"))
       .connect(WebSocketUrl("ws://localhost:8080/ws"))
-      // .flatMap(new WebRTCClientFallback().connect(_))
+      .flatMap(new WebRTCClientFallback().connect(_))
     
     futureConnection.foreach { connection => 
       val engine = new Engine[Input, State](
