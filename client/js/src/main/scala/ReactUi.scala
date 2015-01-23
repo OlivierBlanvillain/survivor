@@ -78,7 +78,7 @@ object ReactUi {
   val world = component[State] { s =>
     div(ship((s.myShip, s.time)), ship((s.hisShip, s.time)), gunfires(s.gunfires), blocks((s.blocks, s.time)))
   }
-
+  
   def render(state: State): Unit = {
     world(state) render dom.document.getElementById("world")
   }

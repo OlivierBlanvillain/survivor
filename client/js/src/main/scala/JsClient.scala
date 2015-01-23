@@ -11,7 +11,7 @@ object JsClient extends scala.scalajs.js.JSApp {
     val futureConnection = new WebSocketClient()
       // .connect(WebSocketUrl("wss://sleepy-atoll-7403.herokuapp.com/ws"))
       .connect(WebSocketUrl("ws://localhost:8080/ws"))
-      // .flatMap(new WebRTCClientFallback().connect(_))
+      .flatMap(new WebRTCClientFallback().connect(_))
     
     futureConnection.foreach { connection => 
       val engine = new Engine[Input, State](
@@ -31,14 +31,12 @@ class GameLoop(render: () => Unit) {
   import org.scalajs.dom
   
   val AFK_FRAME_INTERVAL = 1000
-  val showfps = new ShowFps
   var callId: Int = 0
 
   def rafLoop(t0: Double): Unit = {
     dom.window.clearInterval(callId)
     callId = dom.window.setInterval(render, AFK_FRAME_INTERVAL)
     render()
-    showfps(t0)
     dom.window.requestAnimationFrame(rafLoop _)
   }
   

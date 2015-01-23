@@ -39,8 +39,6 @@ object JvmClient extends JFXApp {
         connection)
       
       engine.futureAct.foreach(new KeyboardListener(_, root))
-
-      new ShowFps(root, webView)
       new GameLoop(engine.triggerRendering _)
     }
   }
@@ -113,7 +111,6 @@ class Ui(webView: WebView) {
     head(link(rel:="stylesheet", href:=projectRoot+"/client/survivor.css")),
     body(
       div(id:="world"),
-      div(id:="stats", "FPS: ", span(id:="fps", "N/A")),
       script(src:="http://cdnjs.cloudflare.com/ajax/libs/react/0.12.1/react.min.js"),
       script(src:=projectRoot+"/client/js/target/scala-2.11/survivorjs-fastopt.js")
     )
