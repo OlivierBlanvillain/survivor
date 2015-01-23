@@ -2,25 +2,46 @@ package lagcomp
 
 import scala.concurrent._
 import transport.ConnectionHandle
+import scala.util.Random
 
 class ClockSync(connection: ConnectionHandle, localTime: () => Long) {
-  var pending: Boolean = true
+  var behavior: (String => Unit) = greeting _
 
   private val globalTimePromise = Promise[() => Int]()
   private val identityPromise = Promise[Peer]()
   
   def futureGlobalTime: Future[() => Int] = globalTimePromise.future
   def futureIdentity: Future[Peer] = identityPromise.future
+  def pending: Boolean = !globalTimePromise.isCompleted
 
-  val selfStartTime = localTime()
-  connection.write(selfStartTime.toString)
+  val localRandom = Random.nextLong()
+  connection.write(localRandom.toString)
   
   def receive(pickle: String): Unit = {
-    val remoteStartTime = pickle.toLong
-    val startTime = Math.max(selfStartTime, remoteStartTime)
-    
-    identityPromise.success(if(selfStartTime < remoteStartTime) P1 else P2)
-    globalTimePromise.success(() => (localTime() - startTime).toInt * 60 / 1000)
-    pending = false
+    behavior(pickle)
+  }
+
+  def greeting(pickle: String): Unit = {
+    val remoteRandom = pickle.toLong
+    if(localRandom < remoteRandom) {
+      behavior = askingTime(localTime()) _
+      connection.write("")
+    } else {
+      behavior = givingTime _
+    }
+  }
+  
+  def givingTime(pickle: String): Unit = {
+    val now = localTime()
+    connection.write(now.toString)
+    identityPromise.success(P2)
+    globalTimePromise.success(() => (localTime() - now + 500).toInt * 60 / 1000)
+  }
+  
+  def askingTime(askedAt: Long)(pickle: String): Unit = {
+    val now = localTime()
+    val tripTime = (now - askedAt) / 2
+    identityPromise.success(P1)
+    globalTimePromise.success(() => (localTime() - now + tripTime + 500).toInt * 60 / 1000)
   }
 }

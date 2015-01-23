@@ -41,10 +41,11 @@ lazy val lagComp = crossProject
   .settings(name := "lag-comp")
   .settings(libraryDependencies ++= Seq(
     "org.scalajs" %%% "transport-core" % "0.1-SNAPSHOT",
-    "com.lihaoyi" %%% "upickle" % "0.2.6-M3",
-    "org.monifu" %%% "minitest" % "0.10" % "test"))
-  .settings(testFrameworks +=
-    new TestFramework("minitest.runner.Framework"))
+    "com.lihaoyi" %%% "upickle" % "0.2.6-M3"
+    ))
+  //   , "org.monifu" %%% "minitest" % "0.10" % "test"))
+  // .settings(testFrameworks +=
+  //   new TestFramework("minitest.runner.Framework"))
 lazy val lagCompJVM = lagComp.jvm
 lazy val lagCompJS = lagComp.js
 
