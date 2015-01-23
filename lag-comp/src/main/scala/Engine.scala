@@ -34,7 +34,7 @@ class Engine[Input, State](
   private val actPromise = Promise[Input => Unit]()
 
   val loop = new StateLoop(initialState, nextState)
-  val clockSync = new ClockSync(broadcast)
+  val clockSync = new ClockSync(broadcast, System.currentTimeMillis)
   
   broadcast.handlerPromise.success { pickle =>
     if(clockSync.pending) {

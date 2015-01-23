@@ -3,7 +3,7 @@ package lagcomp
 import scala.concurrent._
 import transport.ConnectionHandle
 
-class ClockSync(connection: ConnectionHandle) {
+class ClockSync(connection: ConnectionHandle, localTime: () => Long) {
   var pending: Boolean = true
 
   private val globalTimePromise = Promise[() => Int]()
@@ -12,7 +12,7 @@ class ClockSync(connection: ConnectionHandle) {
   def futureGlobalTime: Future[() => Int] = globalTimePromise.future
   def futureIdentity: Future[Peer] = identityPromise.future
 
-  val selfStartTime = System.currentTimeMillis()
+  val selfStartTime = localTime()
   connection.write(selfStartTime.toString)
   
   def receive(pickle: String): Unit = {
@@ -20,7 +20,7 @@ class ClockSync(connection: ConnectionHandle) {
     val startTime = Math.max(selfStartTime, remoteStartTime)
     
     identityPromise.success(if(selfStartTime < remoteStartTime) P1 else P2)
-    globalTimePromise.success(() => (System.currentTimeMillis() - startTime).toInt * 60 / 1000)
+    globalTimePromise.success(() => (localTime() - startTime).toInt * 60 / 1000)
     pending = false
   }
 }
