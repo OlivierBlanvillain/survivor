@@ -305,10 +305,10 @@ body.show-help #world-container {
  position: absolute;
  left: 0px;
  top: 0px;
- /* will be resized via JS ... */
- width: 0px;
- height: 0px;
+ width: 1140px;
+ height: 720px;
  _background: #000;
+ border:1px solid #000;
 }
 
 .space {

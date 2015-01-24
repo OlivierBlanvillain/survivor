@@ -27,19 +27,21 @@ object ReactUi {
     
     if(dead) {
       val deadTime = now - deadSince
-      val frame =
-        if(deadTime % 8 == 3 || deadTime % 8 == 4) 0
-        else if(deadTime > 0.5*respawnDelay) 0
-        else if(deadTime > 0.4*respawnDelay) 4
-        else if(deadTime > 0.3*respawnDelay) 3
-        else if(deadTime > 0.2*respawnDelay) 2
-        else if(deadTime > 0.1*respawnDelay) 1
-        else 3
-      
-      div(
-        for(i <- List(-1, 0, 1); j <- List(-1, 0, 1) if(!(i == 0 && j == 0))) yield
-          div(cls:="big-explosion-"+frame, top:=y+8*deadTime*i, left:=x+8*deadTime*j)
-      )()
+      if(deadTime > 0.5*respawnDelay) {
+        div()
+      } else {
+        val frame =
+          if(deadTime % 8 == 3 || deadTime % 8 == 4) 0
+          else if(deadTime > 0.4*respawnDelay) 4
+          else if(deadTime > 0.3*respawnDelay) 3
+          else if(deadTime > 0.2*respawnDelay) 2
+          else if(deadTime > 0.1*respawnDelay) 1
+          else 3
+        div(
+          for(i <- List(-1, 0, 1); j <- List(-1, 0, 1) if(!(i == 0 && j == 0))) yield
+            div(cls:="big-explosion-"+frame, top:=y+8*deadTime*i, left:=x+8*deadTime*j)
+        )()
+      }
     } else {
       val clazz = List(
         Some("ship"),
@@ -80,12 +82,24 @@ object ReactUi {
     div(ship((s.ship1, s.time)), ship((s.ship2, s.time)), gunfires(s.gunfires), blocks((s.blocks, s.time)))
   }
   
-  def scrollTo(ship: Ship): Unit = {
-    org.scalajs.dom.window.scrollTo(ship.x.toInt, ship.y.toInt)
+  def adjustView(ship: Ship): Unit = {
+    def inBounds(l: Int, u: Int, v: Int): Int = if(v < l) l else if(v > u) u else v
+
+    val w = org.scalajs.dom.window
+
+    val upperX = Math.max(0, ship.x.toInt - w.innerWidth / 3)
+    val lowerX = Math.min(ship.x.toInt - 2 * w.innerWidth / 3, World.widthPx - w.innerWidth)
+    val newX = inBounds(l=lowerX, u=upperX, w.pageXOffset)
+
+    val upperY = Math.max(0, ship.y.toInt - w.innerHeight / 3)
+    val lowerY = Math.min(ship.y.toInt - 2 * w.innerHeight / 3, World.heightPx - w.innerHeight)
+    val newY = inBounds(l=lowerY, u=upperY, w.pageYOffset)
+
+    w.scrollTo(newX, newY)
   }
   
   def render(me: Peer)(state: State): Unit = {
-    scrollTo(if(me == P1) state.ship1 else state.ship2)
+    adjustView(if(me == P1) state.ship1 else state.ship2)
     world(state) render dom.document.getElementById("world")
   }
   
