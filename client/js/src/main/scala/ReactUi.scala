@@ -9,6 +9,7 @@ import upickle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.all._
 import scala.util.Random
+import lagcomp.{ Peer, P1, P2 }
 
 @JSExport("ReactUi")
 object ReactUi {
@@ -76,16 +77,23 @@ object ReactUi {
   }
   
   val world = component[State] { s =>
-    div(ship((s.myShip, s.time)), ship((s.hisShip, s.time)), gunfires(s.gunfires), blocks((s.blocks, s.time)))
+    div(ship((s.ship1, s.time)), ship((s.ship2, s.time)), gunfires(s.gunfires), blocks((s.blocks, s.time)))
   }
   
-  def render(state: State): Unit = {
+  def scrollTo(ship: Ship): Unit = {
+    org.scalajs.dom.window.scrollTo(ship.x.toInt, ship.y.toInt)
+  }
+  
+  def render(me: Peer)(state: State): Unit = {
+    scrollTo(if(me == P1) state.ship1 else state.ship2)
     world(state) render dom.document.getElementById("world")
   }
   
   @JSExport
-  def renderString(string: String): Unit = {
-    val state = upickle.read[State](string)
-    render(state)
+  def renderString(pickleMe: String, pickleState: String): Unit = {
+    val state = upickle.read[State](pickleState)
+    val me = upickle.read[Peer](pickleMe)
+    render(me)(state)
   }
 }
+  

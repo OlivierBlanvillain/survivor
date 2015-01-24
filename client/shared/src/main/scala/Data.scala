@@ -25,8 +25,8 @@ case class Input(key: Key, action: KeyAction)
 
 case class State(
   time: Int,
-  myShip: Ship,
-  hisShip: Ship,
+  ship1: Ship,
+  ship2: Ship,
   gunfires: List[Gunfire],
   blocks: List[Block])
 

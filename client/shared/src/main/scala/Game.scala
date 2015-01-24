@@ -9,9 +9,9 @@ object Game {
     val aliveBlocks = state.blocks.filterNot(_.dead(t))
     
     val inCollision: List[Shape] = Collision.of(
-      List(state.myShip, state.hisShip).filterNot(_.dead) ::: state.gunfires ::: aliveBlocks)
+      List(state.ship1, state.ship2).filterNot(_.dead) ::: state.gunfires ::: aliveBlocks)
     
-    val gunfires: List[Gunfire] = fires(state.myShip, t) ::: fires(state.hisShip, t) :::
+    val gunfires: List[Gunfire] = fires(state.ship1, t) ::: fires(state.ship2, t) :::
       state.gunfires.diff(inCollision).filter { gf => World.contains(x=gf.x, y=gf.y) }
     
     val nextBlocks: List[Block] = aliveBlocks.map { block =>
@@ -22,8 +22,8 @@ object Game {
     
     State(
       state.time + 1,
-      myShip=nextShip(state.myShip, myInputs, t, inCollision.contains(state.myShip)),
-      hisShip=nextShip(state.hisShip, hisInputs, t, inCollision.contains(state.hisShip)),
+      ship1=nextShip(state.ship1, myInputs, t, inCollision.contains(state.ship1)),
+      ship2=nextShip(state.ship2, hisInputs, t, inCollision.contains(state.ship2)),
       gunfires.map(_.next),
       nextBlocks)
   }

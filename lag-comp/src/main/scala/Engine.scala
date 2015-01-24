@@ -13,7 +13,7 @@ case object P2 extends Peer
 class Engine[Input, State](
       initialState: State,
       nextState: (State, Set[Action[Input]]) => State,
-      render: State => Unit,
+      render: Peer => State => Unit,
       broadcast: ConnectionHandle
     )(implicit
       ec: ExecutionContext,
@@ -22,11 +22,11 @@ class Engine[Input, State](
     ) extends AbstractEngine(initialState, nextState, render, broadcast) {
   
   def triggerRendering(): Unit = {
-    clockSync.futureGlobalTime.value match {
-      case Some(Success(globalTime)) =>
-        render(loop.stateAt(globalTime()))
-      case _ =>
-        render(loop.stateAt(0))
+    // Not with a for loop to ensure that render is called in the same thread
+    (clockSync.futureGlobalTime.value, clockSync.futureIdentity.value) match{
+      case (Some(Success(globalTime)), Some(Success(identity))) =>
+        render(identity)(loop.stateAt(globalTime()))
+      case _ => ()
     }
   }
   def futureAct: Future[Input => Unit] = actPromise.future

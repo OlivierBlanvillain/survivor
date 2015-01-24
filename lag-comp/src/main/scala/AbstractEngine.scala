@@ -9,7 +9,7 @@ abstract
 class AbstractEngine[Input, State](
     initState: State,
     nextState: (State, Set[Action[Input]]) => State,
-    render: State => Unit,
+    render: Peer => State => Unit,
     broadcastConnection: ConnectionHandle) {
   
   def triggerRendering(): Unit

@@ -29,7 +29,7 @@ object JvmClient extends JFXApp {
   onLoad(webView) {
     val futureConnection = new WebSocketClient()
       .connect(WebSocketUrl("ws://localhost:8080/ws"))
-      .flatMap(new WebRTCClientFallback().connect(_))
+      // .flatMap(new WebRTCClientFallback().connect(_))
     
     futureConnection.foreach { connection => 
       val engine = new Engine[Input, State](
@@ -100,9 +100,10 @@ class Ui(webView: WebView) {
   import upickle._
   import scalatags.Text.all._
 
-  def render(state: State): Unit = {
+  def render(me: Peer)(state: State): Unit = {
     val pickledState = upickle.write(state)
-    webView.engine.executeScript(s"""ReactUi().renderString('$pickledState');""")
+    val pickledPeer = upickle.write(me)
+    webView.engine.executeScript(s"""ReactUi().renderString('$pickledPeer', '$pickledState');""")
   }
   
   val projectRoot = "file://" + System.getProperty("user.dir")
