@@ -91,8 +91,8 @@ case class Ship(
 }
 
 object World {
-  val width = 35
-  val height = 22
+  val width = Initial.map.lines.next.size
+  val height = Initial.map.lines.size
   val unitPx = 32
   val widthPx = width * unitPx
   val heightPx = height * unitPx

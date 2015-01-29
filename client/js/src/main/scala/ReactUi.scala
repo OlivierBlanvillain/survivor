@@ -64,14 +64,27 @@ object ReactUi {
   }
 
   val blocks = component[(List[Block], Int)] { case (bs, now) =>
-    div(bs.map { block =>
+    val w = org.scalajs.dom.window
+    val innerWidth = w.innerWidth
+    val innerHeight = w.innerHeight
+    val pageXOffset = w.pageXOffset
+    val pageYOffset = w.pageYOffset
+
+    div(bs
+          .map { block =>
       if(block dead now) {
         div()
       } else {
         val clazz = if(block exploding now) {
           "block exploding-" + ((now % 16) >> 1)
         } else {
-          "block type-0-" + ((now % 128) >> 5)
+          val frame = ((now % 128) >> 5)
+          (block.x < 1000, block.y < 700) match {
+            case (true, true) => "block type-0-" + frame
+            case (true, false) => "block type-1-" + frame
+            case (false, true) => "block type-3-" + frame
+            case (false, false) => "block type-2-" + frame
+          }
         }
         div(cls:=clazz, top:=block.y-World.unitPx/2, left:=block.x-World.unitPx/2)
       }
@@ -79,7 +92,17 @@ object ReactUi {
   }
   
   val world = component[State] { s =>
-    div(ship((s.ship1, s.time)), ship((s.ship2, s.time)), gunfires(s.gunfires), blocks((s.blocks, s.time)))
+    val ship1Component = ship((s.ship1, s.time))
+    val ship2Component = ship((s.ship2, s.time))
+    val gunfiresComponent = gunfires(s.gunfires)
+    val blocksComponent = blocks((s.blocks, s.time))
+
+    div(
+      ship1Component,
+      ship2Component,
+      gunfiresComponent,
+      blocksComponent
+    )
   }
   
   def adjustView(ship: Ship): Unit = {

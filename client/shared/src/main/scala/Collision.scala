@@ -4,6 +4,7 @@ import scala.collection.mutable
 
 object Collision {
   def of(shapes: List[Shape]): List[Shape] = {
+    Nil
     val inCollision = mutable.Set[Shape]()
     val map = mutable.Map[Point, mutable.Set[Shape]]()
 
