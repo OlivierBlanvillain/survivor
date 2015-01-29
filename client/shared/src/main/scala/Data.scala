@@ -11,14 +11,15 @@ sealed trait KeyAction
 case object Press extends KeyAction
 case object Release extends KeyAction
 
+sealed trait Or
 sealed trait XOr { def opposite: XOr }
-case object ⇦ extends XOr { def opposite = ⇨ }
-case object ⇨ extends XOr { def opposite = ⇦ }
+case object ⇦ extends XOr with Or { def opposite = ⇨ }
+case object ⇨ extends XOr with Or { def opposite = ⇦ }
 case object ⬄ extends XOr { def opposite = ⬄ }
 
 sealed trait YOr { def opposite: YOr }
-case object ⇧ extends YOr { def opposite = ⇩ }
-case object ⇩ extends YOr { def opposite = ⇧ }
+case object ⇧ extends YOr with Or { def opposite = ⇩ }
+case object ⇩ extends YOr with Or { def opposite = ⇧ }
 case object ⇳ extends YOr { def opposite = ⇳ }
 
 case class Input(key: Key, action: KeyAction)
@@ -27,15 +28,16 @@ case class State(
   time: Int,
   ship1: Ship,
   ship2: Ship,
-  gunfires: List[Gunfire],
+  shipbullets: List[ShipBullet],
+  turrets: List[Turret],
   blocks: List[Block])
 
 case class Block(
   x: Double,
   y: Double,
-  damaged: Boolean=false,
-  dying: Boolean=false,
-  lastHit: Int=Int.MinValue
+  damaged: Boolean = false,
+  dying: Boolean = false,
+  lastHit: Int = 0
 ) extends Rectangle {
   val halfWeight = 12.0
   val halfHeight = 12.0
@@ -43,7 +45,7 @@ case class Block(
   def dead(time: Int) = dying && !exploding(time)
 }
 
-case class Gunfire(
+case class ShipBullet(
   x: Double,
   y: Double,
   xOr: XOr,
@@ -60,7 +62,7 @@ case class Gunfire(
     case ⇳ => 0
   }
   val radius = 3.0
-  def next = Gunfire(x + xSpeed, y + ySpeed, xOr, yOr)
+  def next = ShipBullet(x + xSpeed, y + ySpeed, xOr, yOr)
 }
 
 case class Ship(
@@ -88,6 +90,19 @@ case class Ship(
   val maxSpeed = 4.0
   val firingRate = 10
   val respawnDelay = 100
+}
+
+case class Turret(
+  x: Double,
+  y: Double,
+  orientation: Or,
+  range: Double = 0,
+  dying: Boolean = false,
+  dyingSince: Int = 0
+) extends Rectangle {
+  val halfWeight = 16.0
+  val halfHeight = 16.0
+  def dead(time: Int) = dying && time - dyingSince < 16
 }
 
 object World {

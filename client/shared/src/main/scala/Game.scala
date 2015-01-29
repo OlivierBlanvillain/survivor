@@ -9,10 +9,10 @@ object Game {
     val aliveBlocks = state.blocks.filterNot(_.dead(t))
     
     val inCollision: List[Shape] = Collision.of(
-      List(state.ship1, state.ship2).filterNot(_.dead) ::: state.gunfires ::: aliveBlocks)
+      List(state.ship1, state.ship2).filterNot(_.dead) ::: state.shipbullets ::: aliveBlocks)
     
-    val gunfires: List[Gunfire] = fires(state.ship1, t) ::: fires(state.ship2, t) :::
-      state.gunfires.diff(inCollision).filter { gf => World.contains(x=gf.x, y=gf.y) }
+    val shipbullets: List[ShipBullet] = fires(state.ship1, t) ::: fires(state.ship2, t) :::
+      state.shipbullets.diff(inCollision).filter { gf => World.contains(x=gf.x, y=gf.y) }
     
     val nextBlocks: List[Block] = aliveBlocks.map { block =>
       if(inCollision.contains(block) && !block.dying) {
@@ -24,16 +24,17 @@ object Game {
       state.time + 1,
       ship1=nextShip(state.ship1, myInputs, t, inCollision.contains(state.ship1)),
       ship2=nextShip(state.ship2, hisInputs, t, inCollision.contains(state.ship2)),
-      gunfires.map(_.next),
+      shipbullets.map(_.next),
+      state.turrets,
       nextBlocks)
   }
   
-  def fires(ship: Ship, now: Int): List[Gunfire] = {
+  def fires(ship: Ship, now: Int): List[ShipBullet] = {
     import ship._
     
     if(firing && (now - firingSince) % firingRate == 1) {
-      val gunfire = Gunfire(x=x, y=y, xOr, yOr)
-      def moveABit(gf: Gunfire) = gf.next.next
+      val gunfire = ShipBullet(x=x, y=y, xOr, yOr)
+      def moveABit(gf: ShipBullet) = gf.next.next
       List(moveABit(gunfire), moveABit(gunfire.copy(xOr=xOr.opposite, yOr=yOr.opposite)))
     } else Nil
   }

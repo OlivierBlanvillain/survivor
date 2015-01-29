@@ -57,51 +57,63 @@ object ReactUi {
     }
   }
   
-  val gunfires = component[List[Gunfire]] { gfs =>
+  val shipbullets = component[List[ShipBullet]] { gfs =>
     div(gfs.map { gunfire =>
       div(cls:="ship-gunfire", top:=gunfire.y, left:=gunfire.x)
     })
   }
-
+  
+  def hardCodedType(x: Double, y: Double): Int = {
+    (x < 1000, y < 700) match {
+      case (true, true) => 0
+      case (true, false) => 1
+      case (false, true) => 3
+      case (false, false) => 2
+    }
+  }
+  
   val blocks = component[(List[Block], Int)] { case (bs, now) =>
-    val w = org.scalajs.dom.window
-    val innerWidth = w.innerWidth
-    val innerHeight = w.innerHeight
-    val pageXOffset = w.pageXOffset
-    val pageYOffset = w.pageYOffset
-
-    div(bs
-          .map { block =>
+    div(bs.map { block =>
       if(block dead now) {
         div()
       } else {
         val clazz = if(block exploding now) {
           "block exploding-" + ((now % 16) >> 1)
         } else {
-          val frame = ((now % 128) >> 5)
-          (block.x < 1000, block.y < 700) match {
-            case (true, true) => "block type-0-" + frame
-            case (true, false) => "block type-1-" + frame
-            case (false, true) => "block type-3-" + frame
-            case (false, false) => "block type-2-" + frame
-          }
+          "block type-" + hardCodedType(x=block.x, block.y) + "-" + ((now % 128) >> 5)
         }
         div(cls:=clazz, top:=block.y-World.unitPx/2, left:=block.x-World.unitPx/2)
       }
     })
   }
   
+  val turrets = component[(List[Turret], Int)] { case (ts, now) =>
+    div(ts.map { turret =>
+      if(turret dead now) {
+        div()
+      } else {
+        val clazz = if(turret.dying) {
+          "turret exploding-" + ((now % 16) >> 1)
+        } else {
+          turret.orientation match {
+            case ⇧ => "turret type-top"
+            case ⇩ => "turret type-down"
+            case ⇦ => "turret type-left"
+            case ⇨ => "turret type-right"
+          }
+        }
+        div(cls:=clazz, top:=turret.y-World.unitPx/2, left:=turret.x-World.unitPx/2)
+      }
+    })
+  }
+  
   val world = component[State] { s =>
-    val ship1Component = ship((s.ship1, s.time))
-    val ship2Component = ship((s.ship2, s.time))
-    val gunfiresComponent = gunfires(s.gunfires)
-    val blocksComponent = blocks((s.blocks, s.time))
-
     div(
-      ship1Component,
-      ship2Component,
-      gunfiresComponent,
-      blocksComponent
+      ship((s.ship1, s.time)),
+      ship((s.ship2, s.time)),
+      shipbullets(s.shipbullets),
+      turrets((s.turrets, s.time)),
+      blocks((s.blocks, s.time))
     )
   }
   

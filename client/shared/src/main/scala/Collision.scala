@@ -51,7 +51,7 @@ trait Shape {
         //           b.left <= a.right &&
         //           a.top <= b.bottom &&
         //           b.top <= a.bottom)
-        ???
+        false
 
       case (c: Circle, r: Rectangle) =>
         // Source: http://goo.gl/uwtkVFn
