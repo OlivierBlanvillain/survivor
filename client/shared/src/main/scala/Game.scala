@@ -7,11 +7,13 @@ object Game {
     val (myInputs, hisInputs) = inputs.partition(_.peer == P1)
     val t = state.time
     val aliveBlocks = state.blocks.filterNot(_.dead(t))
+    val aliveTurrets = state.turrets.filterNot(_.dead(t))
     
     val inCollision: List[Shape] = Collision.of(
       List(state.ship1, state.ship2).filterNot(_.dead),
       state.shipbullets,
-      aliveBlocks)
+      aliveBlocks,
+      aliveTurrets)
     
     val shipbullets: List[ShipBullet] = fires(state.ship1, t) ::: fires(state.ship2, t) :::
       state.shipbullets.diff(inCollision).filter { gf => World.contains(x=gf.x, y=gf.y) }
@@ -22,12 +24,18 @@ object Game {
       } else block
     }
     
+    val nextTurrets: List[Turret] = aliveTurrets.map { turret =>
+      if(inCollision.contains(turret) && !turret.dying) {
+        turret.copy(dying=true, dyingSince=t)
+      } else turret
+    }
+    
     State(
       state.time + 1,
       ship1=nextShip(state.ship1, myInputs, t, inCollision.contains(state.ship1)),
       ship2=nextShip(state.ship2, hisInputs, t, inCollision.contains(state.ship2)),
       shipbullets.map(_.next),
-      state.turrets,
+      nextTurrets,
       nextBlocks)
   }
   

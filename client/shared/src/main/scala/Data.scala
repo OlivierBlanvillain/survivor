@@ -106,7 +106,7 @@ case class Turret(
   val y = World.unitPx * row.toDouble + World.unitPx/2
   val halfWeight = 16.0
   val halfHeight = 16.0
-  def dead(time: Int) = dying && time - dyingSince < 16
+  def dead(time: Int) = dying && time - dyingSince > 16
 }
 
 object World {

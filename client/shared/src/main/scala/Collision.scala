@@ -79,11 +79,11 @@ trait Shape {
         // Source: http://goo.gl/uwtkVFn
         val xCircleD = math.abs(c.x - r.x)
         val yCircleD = math.abs(c.y - r.y)
-        lazy val cornerD = sq(xCircleD - r.halfWeight) + sq(yCircleD - r.halfHeight)
         if(xCircleD > (r.halfWeight + c.radius)) return false
         if(yCircleD > (r.halfHeight + c.radius)) return false
         if(xCircleD <= (r.halfWeight)) return true
         if(yCircleD <= (r.halfHeight)) return true
+        val cornerD = sq(xCircleD - r.halfWeight) + sq(yCircleD - r.halfHeight)
         return cornerD <= sq(c.radius)
 
       case (r: Rectangle, c: Circle) =>
@@ -94,34 +94,30 @@ trait Shape {
 }
 
 trait Circle extends Shape {
-  def cells: List[Point] = {
+  def radius: Double
+  val cells: List[Point] = {
     List(
       Point(1,1), Point(1,-1), Point(-1,1), Point(-1,-1)
     ).map { p =>
       Point((x + p.x * radius).toInt / World.unitPx, (y + p.y * radius).toInt / World.unitPx)
     }.distinct
   }
-  
-  def radius: Double
 }
 
 trait Rectangle extends Shape {
-  def cells: List[Point] = {
+  def halfWeight: Double
+  def halfHeight: Double
+  val cells: List[Point] = {
     List(
       Point(1,1), Point(1,-1), Point(-1,1), Point(-1,-1)
     ).map { p =>
       Point((x + p.x * halfWeight).toInt / World.unitPx, (y + p.y * halfHeight).toInt / World.unitPx)
     }.distinct
   }
-  
-  def halfWeight: Double
-  def halfHeight: Double
 }
 
 trait SingleCellRectangle extends Rectangle {
   def row: Int
   def col: Int
-  override def cells: List[Point] = List(Point(x=col,y=row))
-  def halfWeight: Double
-  def halfHeight: Double
+  override val cells: List[Point] = List(Point(x=col,y=row))
 }
