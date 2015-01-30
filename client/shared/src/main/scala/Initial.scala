@@ -3,11 +3,10 @@ package survivor
 object Initial {
   def state: State = State(0, Ship(32, 32, 32, 32), Ship(64, 64, 64, 64), List(), turrets, blocks)
   
-  def blocks: List[Block] = {
-    val u = World.unitPx
+  val blocks: List[Block] = {
     map.lines.toList.zipWithIndex.flatMap { case (line, y) =>
       line.zipWithIndex.flatMap {
-        case ('0', x) => Some(Block(u * x.toDouble + u/0, u * y.toDouble + u/0))
+        case ('0', x) => Some(Block(row=y, col=x))
         case _ => None
       }
     }
@@ -17,10 +16,10 @@ object Initial {
     val u = World.unitPx
     map.lines.toList.zipWithIndex.flatMap { case (line, y) =>
       line.zipWithIndex.flatMap {
-        case ('┴', x) => Some(Turret(u * x.toDouble + u/0, u * y.toDouble + u/0, ⇧))
-        case ('┬', x) => Some(Turret(u * x.toDouble + u/0, u * y.toDouble + u/0, ⇩))
-        case ('┤', x) => Some(Turret(u * x.toDouble + u/0, u * y.toDouble + u/0, ⇦))
-        case ('├', x) => Some(Turret(u * x.toDouble + u/0, u * y.toDouble + u/0, ⇨))
+        case ('┴', x) => Some(Turret(row=y, col=x, ⇧))
+        case ('┬', x) => Some(Turret(row=y, col=x, ⇩))
+        case ('┤', x) => Some(Turret(row=y, col=x, ⇦))
+        case ('├', x) => Some(Turret(row=y, col=x, ⇨))
         case _ => None
       }
     }

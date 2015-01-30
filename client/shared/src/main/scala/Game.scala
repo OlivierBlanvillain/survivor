@@ -9,7 +9,9 @@ object Game {
     val aliveBlocks = state.blocks.filterNot(_.dead(t))
     
     val inCollision: List[Shape] = Collision.of(
-      List(state.ship1, state.ship2).filterNot(_.dead) ::: state.shipbullets ::: aliveBlocks)
+      List(state.ship1, state.ship2).filterNot(_.dead),
+      state.shipbullets,
+      aliveBlocks)
     
     val shipbullets: List[ShipBullet] = fires(state.ship1, t) ::: fires(state.ship2, t) :::
       state.shipbullets.diff(inCollision).filter { gf => World.contains(x=gf.x, y=gf.y) }

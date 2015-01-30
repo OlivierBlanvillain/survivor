@@ -33,12 +33,14 @@ case class State(
   blocks: List[Block])
 
 case class Block(
-  x: Double,
-  y: Double,
+  row: Int,
+  col: Int,
   damaged: Boolean = false,
   dying: Boolean = false,
   lastHit: Int = 0
-) extends Rectangle {
+) extends SingleCellRectangle {
+  val x = World.unitPx * col.toDouble + World.unitPx/2
+  val y = World.unitPx * row.toDouble + World.unitPx/2
   val halfWeight = 12.0
   val halfHeight = 12.0
   def exploding(time: Int) = damaged && time - lastHit < 16
@@ -93,13 +95,15 @@ case class Ship(
 }
 
 case class Turret(
-  x: Double,
-  y: Double,
+  row: Int,
+  col: Int,
   orientation: Or,
   range: Double = 0,
   dying: Boolean = false,
   dyingSince: Int = 0
-) extends Rectangle {
+) extends SingleCellRectangle {
+  val x = World.unitPx * col.toDouble + World.unitPx/2
+  val y = World.unitPx * row.toDouble + World.unitPx/2
   val halfWeight = 16.0
   val halfHeight = 16.0
   def dead(time: Int) = dying && time - dyingSince < 16
