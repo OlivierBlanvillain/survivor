@@ -95,7 +95,7 @@ trait Shape {
 
 trait Circle extends Shape {
   def radius: Double
-  val cells: List[Point] = {
+  def cells: List[Point] = {
     List(
       Point(1,1), Point(1,-1), Point(-1,1), Point(-1,-1)
     ).map { p =>
@@ -107,17 +107,11 @@ trait Circle extends Shape {
 trait Rectangle extends Shape {
   def halfWeight: Double
   def halfHeight: Double
-  val cells: List[Point] = {
+  def cells: List[Point] = {
     List(
       Point(1,1), Point(1,-1), Point(-1,1), Point(-1,-1)
     ).map { p =>
       Point((x + p.x * halfWeight).toInt / World.unitPx, (y + p.y * halfHeight).toInt / World.unitPx)
     }.distinct
   }
-}
-
-trait SingleCellRectangle extends Rectangle {
-  def row: Int
-  def col: Int
-  override val cells: List[Point] = List(Point(x=col,y=row))
 }

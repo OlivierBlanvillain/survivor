@@ -38,13 +38,14 @@ case class Block(
   damaged: Boolean = false,
   dying: Boolean = false,
   lastHit: Int = 0
-) extends SingleCellRectangle {
+) extends Rectangle {
   val x = World.unitPx * col.toDouble + World.unitPx/2
   val y = World.unitPx * row.toDouble + World.unitPx/2
   val halfWeight = 12.0
   val halfHeight = 12.0
   def exploding(time: Int) = damaged && time - lastHit < 16
   def dead(time: Int) = dying && !exploding(time)
+  override val cells: List[Point] = List(Point(x=col,y=row))
 }
 
 case class ShipBullet(
@@ -65,6 +66,7 @@ case class ShipBullet(
   }
   val radius = 3.0
   def next = ShipBullet(x + xSpeed, y + ySpeed, xOr, yOr)
+  override val cells: List[Point] = List(Point(x.toInt / World.unitPx, y.toInt / World.unitPx))
 }
 
 case class Ship(
@@ -81,10 +83,8 @@ case class Ship(
   deadSince: Int = 0,
   firingSince: Int = 0
 ) extends Circle {
-  def thrusting: Boolean = pressed.filterNot(_ == Space).nonEmpty
-  def firing: Boolean = !dead && pressed.contains(Space)
-  def x(time: Int): Double = x
-  def y(time: Int): Double = y
+  val thrusting: Boolean = pressed.filterNot(_ == Space).nonEmpty
+  val firing: Boolean = !dead && pressed.contains(Space)
   val radius = 14.0
   val acceleration = 0.2
   val decelerationRate = 0.9
@@ -101,12 +101,13 @@ case class Turret(
   range: Double = 0,
   dying: Boolean = false,
   dyingSince: Int = 0
-) extends SingleCellRectangle {
+) extends Rectangle {
   val x = World.unitPx * col.toDouble + World.unitPx/2
   val y = World.unitPx * row.toDouble + World.unitPx/2
   val halfWeight = 16.0
   val halfHeight = 16.0
   def dead(time: Int) = dying && time - dyingSince > 16
+  override val cells: List[Point] = List(Point(x=col,y=row))
 }
 
 object World {
