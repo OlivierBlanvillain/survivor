@@ -3,40 +3,52 @@ package survivor
 import lagcomp._
 
 object Game {
-  def nextState(state: State, inputs: Set[Action[Input]]): State = {
+  def nextState(state: State, inputs: List[Action[Input]]): State = {
     val (myInputs, hisInputs) = inputs.partition(_.peer == P1)
-    val t = state.time
-    val aliveBlocks = state.blocks.filterNot(_.dead(t))
-    val aliveTurrets = state.turrets.filterNot(_.dead(t))
+    val now = state.time
     
     val inCollision: List[Shape] = Collision.of(
       List(state.ship1, state.ship2).filterNot(_.dead),
       state.shipbullets,
-      aliveBlocks,
-      aliveTurrets)
+      state.blocks,
+      state.turrets,
+      state.turrets.map(_.bullet(now)),
+      state.explosions,
+      World.walls)
     
-    val shipbullets: List[ShipBullet] = fires(state.ship1, t) ::: fires(state.ship2, t) :::
+    val shipbullets: List[ShipBullet] = fires(state.ship1, now) ::: fires(state.ship2, now) :::
       state.shipbullets.diff(inCollision).filter { gf => World.contains(x=gf.x, y=gf.y) }
     
-    val nextBlocks: List[Block] = aliveBlocks.map { block =>
-      if(inCollision.contains(block) && !block.dying) {
-        (if(!block.damaged) block.copy(damaged=true) else block.copy(dying=true)).copy(lastHit=t)
-      } else block
+    val nextBlocks: List[Block] = {
+      if(inCollision.exists(_.isInstanceOf[Block]))
+        state.blocks.collect {
+          case block if !inCollision.contains(block) => block
+          case block if !block.damaged => block.copy(damaged=true)
+        }
+      else state.blocks
     }
     
-    val nextTurrets: List[Turret] = aliveTurrets.map { turret =>
-      if(inCollision.contains(turret) && !turret.dying) {
-        turret.copy(dying=true, dyingSince=t)
-      } else turret
+    val nextTurrets: List[Turret] = {
+      if(inCollision.exists(_.isInstanceOf[Turret]))
+        state.turrets diff inCollision
+      else state.turrets
+    }
+    
+    val nextExplosions: List[Explosion] = {
+      inCollision.collect {
+        case block: Block => block.explosion(now)
+        case turret: Turret => turret.explosion(now)
+      } ::: state.explosions.filterNot(_ over now)
     }
     
     State(
       state.time + 1,
-      ship1=nextShip(state.ship1, myInputs, t, inCollision.contains(state.ship1)),
-      ship2=nextShip(state.ship2, hisInputs, t, inCollision.contains(state.ship2)),
+      ship1=nextShip(state.ship1, myInputs, now, inCollision.contains(state.ship1)),
+      ship2=nextShip(state.ship2, hisInputs, now, inCollision.contains(state.ship2)),
       shipbullets.map(_.next),
       nextTurrets,
-      nextBlocks)
+      nextBlocks,
+      nextExplosions)
   }
   
   def fires(ship: Ship, now: Int): List[ShipBullet] = {
@@ -49,10 +61,10 @@ object Game {
     } else Nil
   }
   
-  def nextShip(oldShip: Ship, events: Set[Action[Input]], now: Int, collision: Boolean): Ship = {
+  def nextShip(oldShip: Ship, events: List[Action[Input]], now: Int, collision: Boolean): Ship = {
     import oldShip._
     
-    val inputs = events.map(_.input).toList.sortWith {
+    val inputs = events.map(_.input).sortWith {
       case (Input(_, Press), Input(_, Release)) => true
       case _ => false
     }

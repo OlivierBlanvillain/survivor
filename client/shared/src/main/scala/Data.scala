@@ -30,7 +30,8 @@ case class State(
   ship2: Ship,
   shipbullets: List[ShipBullet],
   turrets: List[Turret],
-  blocks: List[Block])
+  blocks: List[Block],
+  explosions: List[Explosion]=Nil)
 
 case class Block(
   row: Int,
@@ -39,13 +40,13 @@ case class Block(
   dying: Boolean = false,
   lastHit: Int = 0
 ) extends Rectangle {
-  val x = World.unitPx * col.toDouble + World.unitPx/2
-  val y = World.unitPx * row.toDouble + World.unitPx/2
-  val halfWeight = 12.0
-  val halfHeight = 12.0
-  def exploding(time: Int) = damaged && time - lastHit < 16
-  def dead(time: Int) = dying && !exploding(time)
-  override val cells: List[Point] = List(Point(x=col,y=row))
+  val x = World.unitPx * col.toDouble + World.halfUnitPx
+  val y = World.unitPx * row.toDouble + World.halfUnitPx
+  val halfWidth = 12
+  val halfHeight = 12
+  def explosion(time: Int) = Explosion(x, y, cells, time)
+  val cell = Point(x=col,y=row)
+  val cells = List(cell)
 }
 
 case class ShipBullet(
@@ -66,7 +67,7 @@ case class ShipBullet(
   }
   val radius = 3.0
   def next = ShipBullet(x + xSpeed, y + ySpeed, xOr, yOr)
-  override val cells: List[Point] = List(Point(x.toInt / World.unitPx, y.toInt / World.unitPx))
+  override val cells = List(Point(x.toInt / World.unitPx, y.toInt / World.unitPx))
 }
 
 case class Ship(
@@ -85,7 +86,7 @@ case class Ship(
 ) extends Circle {
   val thrusting: Boolean = pressed.filterNot(_ == Space).nonEmpty
   val firing: Boolean = !dead && pressed.contains(Space)
-  val radius = 14.0
+  val radius = 13.0
   val acceleration = 0.2
   val decelerationRate = 0.9
   val almostZero = 0.01
@@ -98,24 +99,55 @@ case class Turret(
   row: Int,
   col: Int,
   orientation: Or,
-  range: Double = 0,
-  dying: Boolean = false,
-  dyingSince: Int = 0
+  range: Int = 5
 ) extends Rectangle {
-  val x = World.unitPx * col.toDouble + World.unitPx/2
-  val y = World.unitPx * row.toDouble + World.unitPx/2
-  val halfWeight = 16.0
-  val halfHeight = 16.0
-  def dead(time: Int) = dying && time - dyingSince > 16
-  override val cells: List[Point] = List(Point(x=col,y=row))
+  val x = World.unitPx * col.toDouble + World.halfUnitPx
+  val y = World.unitPx * row.toDouble + World.halfUnitPx
+  val halfWidth = 16
+  val halfHeight = 16
+  def explosion(time: Int) = Explosion(x, y, cells, time)
+  def bullet(time: Int) = {
+    val delta = time % (range * World.unitPx)
+    orientation match {
+      case ⇧ => TurretYBullet(x, y - delta)
+      case ⇩ => TurretYBullet(x, y + delta)
+      case ⇦ => TurretXBullet(x - delta, y)
+      case ⇨ => TurretXBullet(x + delta, y)
+    }
+  }
+  val cell = Point(x=col,y=row)
+  val cells = List(cell)
 }
 
-object World {
-  val width = Initial.map.lines.next.size
-  val height = Initial.map.lines.size
-  val unitPx = 32
-  val widthPx = width * unitPx
-  val heightPx = height * unitPx
-  def contains(x: Double, y: Double): Boolean =
-    !(x < 0 || x > World.widthPx || y < 0 || y > World.heightPx)
+trait TurretBullet extends MultiHitbox
+
+case class TurretYBullet(x: Double, y: Double) extends TurretBullet { self =>
+  val hitbox1 = new Hitbox(x=self.x + 7, y=self.y, halfWidth=1, halfHeight=8)
+  val hitbox2 = new Hitbox(x=self.x - 7, y=self.y, halfWidth=1, halfHeight=8)
+  val cells = {
+    val c1 = Point((x + 8).toInt / World.unitPx, y.toInt / World.unitPx)
+    val c2 = Point((x - 8).toInt / World.unitPx, y.toInt / World.unitPx)
+    if(c1 == c2) List(c1) else List(c1, c2)
+  }
+}
+
+case class TurretXBullet(x: Double, y: Double) extends TurretBullet { self =>
+  val hitbox1 = new Hitbox(x=self.x, y=self.y + 7, halfWidth=8, halfHeight=1)
+  val hitbox2 = new Hitbox(x=self.x, y=self.y - 7, halfWidth=8, halfHeight=1)
+  val cells = {
+    val c1 = Point(x.toInt / World.unitPx, (y + 8).toInt / World.unitPx)
+    val c2 = Point(x.toInt / World.unitPx, (y - 8).toInt / World.unitPx)
+    if(c1 == c2) List(c1) else List(c1, c2)
+  }
+}
+
+case class Explosion(
+  x: Double,
+  y: Double,
+  cells: List[Point],
+  startedAt: Int
+) extends Rectangle {
+  val halfWidth = 12
+  val halfHeight = 12
+  def over(time: Int) = time - startedAt > 12
 }

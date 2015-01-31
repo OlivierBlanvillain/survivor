@@ -15,7 +15,7 @@ object JsClient extends scala.scalajs.js.JSApp {
     
     futureConnection.foreach { connection => 
       val engine = new Engine[Input, State](
-        Initial.state,
+        World.initialState,
         Game.nextState,
         ReactUi.render,
         connection)

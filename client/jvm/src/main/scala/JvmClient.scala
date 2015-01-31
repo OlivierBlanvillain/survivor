@@ -33,7 +33,7 @@ object JvmClient extends JFXApp {
     
     futureConnection.foreach { connection => 
       val engine = new Engine[Input, State](
-        Initial.state,
+        World.initialState,
         Game.nextState,
         ui.render,
         connection)
