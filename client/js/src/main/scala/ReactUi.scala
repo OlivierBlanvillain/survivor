@@ -1,3 +1,4 @@
+
 package survivor
 
 import scala.collection.mutable
@@ -211,8 +212,8 @@ object UglyDomUpdates {
     }
   }
 
-  def getElementById(id: String): dom.HTMLElement = {
-    dom.document.getElementById(id).asInstanceOf[dom.HTMLElement]
+  def getElementById(id: String): dom.raw.HTMLElement = {
+    dom.document.getElementById(id).asInstanceOf[dom.raw.HTMLElement]
   }
 
   def adjustView(ship: Ship): Unit = {

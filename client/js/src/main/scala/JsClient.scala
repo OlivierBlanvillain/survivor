@@ -30,7 +30,7 @@ object JsClient extends scala.scalajs.js.JSApp {
 class GameLoop(render: () => Unit) {
   import org.scalajs.dom
   
-  val AFK_FRAME_INTERVAL = 1000
+  val AFK_FRAME_INTERVAL = 1000.0
   var callId: Int = 0
 
   def rafLoop(t0: Double): Unit = {
@@ -45,7 +45,7 @@ class GameLoop(render: () => Unit) {
 
 class KeyboardListener(act: Input => Unit) {
   import org.scalajs.dom
-  import dom.extensions.KeyCode
+  import dom.ext.KeyCode
   
   var lastKey: (Key, KeyAction) = (Space, Release)
   
