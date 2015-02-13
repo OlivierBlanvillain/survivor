@@ -28,8 +28,9 @@ object JvmClient extends JFXApp {
   
   onLoad(webView) {
     val futureConnection = new WebSocketClient()
+      // .connect(WebSocketUrl("wss://sleepy-atoll-7403.herokuapp.com/ws"))
       .connect(WebSocketUrl("ws://localhost:8080/ws"))
-      // .flatMap(new WebRTCClientFallback().connect(_))
+      .flatMap(new WebRTCClientFallback().connect(_))
     
     futureConnection.foreach { connection => 
       val engine = new Engine[Input, State](
@@ -71,7 +72,6 @@ class GameLoop(render: () => Unit) {
   }.start()
 }
 
-  
 class KeyboardListener(act: Input => Unit, scene: Scene) {
   scene.setOnKeyPressed(listener(Press) _)
   scene.setOnKeyReleased(listener(Release) _)
@@ -100,7 +100,7 @@ class Ui(webView: WebView) {
   import upickle._
   import scalatags.Text.all._
 
-  def render(me: Peer)(state: State): Unit = {
+  def render(me: Peer, state: State): Unit = {
     val pickledState = upickle.write(state)
     val pickledPeer = upickle.write(me)
     webView.engine.executeScript(s"""ReactUi().renderString('$pickledPeer', '$pickledState');""")

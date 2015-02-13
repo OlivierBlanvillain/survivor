@@ -169,7 +169,7 @@ object ReactUi {
   // hitboxes(s.explosions),
   // hitboxes(World.walls),
   
-  def render(me: lagcomp.Peer)(state: State): Unit = {
+  def render(me: lagcomp.Peer, state: State): Unit = {
     UglyDomUpdates(me)(state)
     world(state) render dom.document.getElementById("world")
   }
@@ -178,7 +178,7 @@ object ReactUi {
   def renderString(pickleMe: String, pickleState: String): Unit = {
     val state = upickle.read[State](pickleState)
     val me = upickle.read[lagcomp.Peer](pickleMe)
-    render(me)(state)
+    render(me, state)
   }
 }
 

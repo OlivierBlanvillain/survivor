@@ -11,7 +11,8 @@ val commonSettings = Seq(
     "-Ywarn-numeric-widen",
     "-Xfuture",
     "-Xlint"
-  )
+  ),
+  resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 )
 
 lazy val survivor = crossProject
@@ -26,7 +27,7 @@ lazy val survivor = crossProject
   .jsSettings(skip in packageJSDependencies := false)
   .jsSettings(libraryDependencies ++= Seq(
     "com.github.olivierblanvillain" %%% "transport-javascript" % "0.1-SNAPSHOT",
-    "com.github.japgolly.scalajs-react" %%% "core" % "0.7.3-SNAPSHOT",
+    "com.github.japgolly.scalajs-react" %%% "core" % "0.8.0",
     "org.scala-js" %%% "scalajs-dom" % "0.8.0"))
   .jsSettings(jsDependencies +=
     "org.webjars" % "react" % "0.12.1" / "react-with-addons.min.js" commonJSName "React")
